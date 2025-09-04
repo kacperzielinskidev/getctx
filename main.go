@@ -11,18 +11,17 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// A single file or directory item
 type item struct {
 	name  string
 	isDir bool
 }
 
 // The main model for our TUI application.
-// This is the absolute minimum state we need to display a list.
 type model struct {
-	path   string // The path we are viewing
-	items  []item // The files and directories in the path
-	cursor int    // Which item our cursor is pointing at
+	path     string              // The path we are viewing
+	items    []item              // The files and directories in the path
+	cursor   int                 // Which item our cursor is pointing at
+	selected map[string]struct{} // A set of selected file paths
 }
 
 // readDir is a helper function to get the contents of a directory.
@@ -41,57 +40,101 @@ func readDir(path string) ([]item, error) {
 
 // initialModel sets up the very first state of our application.
 func initialModel(startPath string) *model {
-	// We want to work with a clean, absolute path.
 	path, err := filepath.Abs(startPath)
 	if err != nil {
 		log.Fatalf("Could not get absolute path for '%s': %v", startPath, err)
 	}
 
-	// Read the items from the starting path.
 	items, err := readDir(path)
 	if err != nil {
 		log.Fatalf("Could not read directory '%s': %v", path, err)
 	}
 
-	// Return a pointer to our new model.
 	return &model{
-		path:  path,
-		items: items,
+		path:     path,
+		items:    items,
+		selected: make(map[string]struct{}), // Initialize the map
 	}
 }
 
 // Init is the first command that can be run when the program starts.
-// We don't need it to do anything right now.
 func (m *model) Init() tea.Cmd {
 	return nil
 }
 
 // Update handles all user input and events.
-// For now, it only handles moving the cursor and quitting.
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	// tea.KeyMsg is a message sent when the user presses a key.
 	case tea.KeyMsg:
 		switch msg.String() {
-		// Keys to quit the program.
 		case "ctrl+c", "q":
 			return m, tea.Quit
 
-		// Keys to move the cursor up.
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
 			}
 
-		// Keys to move the cursor down.
 		case "down", "j":
 			if m.cursor < len(m.items)-1 {
 				m.cursor++
 			}
+
+		// Enter key: Enter a directory
+		case "enter":
+			if len(m.items) == 0 {
+				break
+			}
+			selectedItem := m.items[m.cursor]
+			if selectedItem.isDir {
+				newPath := filepath.Join(m.path, selectedItem.name)
+				newItems, err := readDir(newPath)
+				if err != nil {
+					// In a real app, you might want to show an error message to the user
+					log.Printf("Error reading directory %s: %v", newPath, err)
+					break
+				}
+				m.path = newPath
+				m.items = newItems
+				m.cursor = 0 // Reset cursor to the top of the new directory
+			}
+
+		// Backspace key: Go up to the parent directory
+		case "backspace":
+			parentPath := filepath.Dir(m.path)
+			// Avoid going "up" from the root directory
+			if parentPath != m.path {
+				newItems, err := readDir(parentPath)
+				if err != nil {
+					log.Printf("Error reading directory %s: %v", parentPath, err)
+					break
+				}
+				m.path = parentPath
+				m.items = newItems
+				m.cursor = 0
+			}
+
+		// Space key: Toggle selection for a file
+		case " ":
+			if len(m.items) == 0 {
+				break
+			}
+			selectedItem := m.items[m.cursor]
+			// We can only select files, not directories
+			if !selectedItem.isDir {
+				fullPath := filepath.Join(m.path, selectedItem.name)
+				// Check if the item is already selected
+				if _, ok := m.selected[fullPath]; ok {
+					// If it is, unselect it
+					delete(m.selected, fullPath)
+				} else {
+					// If it's not, select it
+					m.selected[fullPath] = struct{}{} // Use empty struct for set-like behavior
+				}
+			}
 		}
 	}
 
-	// Return the updated model to the Bubble Tea runtime.
 	return m, nil
 }
 
@@ -99,47 +142,63 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *model) View() string {
 	var s strings.Builder
 
-	s.WriteString("File Lister (press 'q' to quit)\n")
-	s.WriteString("Viewing path: " + m.path + "\n\n")
+	s.WriteString("Wybierz pliki do kontekstu (spacja - zaznacz, enter - wejdź, backspace - cofnij, q - wyjdź)\n")
+	s.WriteString("Aktualna ścieżka: " + m.path + "\n\n")
 
-	// Iterate over our list of items.
 	for i, item := range m.items {
-		// The cursor shows which line we're on.
-		cursor := " " // Default is a space
+		cursor := " " // Default cursor
 		if m.cursor == i {
-			cursor = ">" // Set to ">" if this is the current line
+			cursor = ">"
+		}
+
+		// Determine the prefix for the item (checkbox or empty space)
+		prefix := "   " // Default for directories
+		if !item.isDir {
+			fullPath := filepath.Join(m.path, item.name)
+			if _, ok := m.selected[fullPath]; ok {
+				prefix = "[x]" // Selected file
+			} else {
+				prefix = "[ ]" // Unselected file
+			}
 		}
 
 		// Get the item name.
 		itemName := item.name
-		// Add a slash to directories to make them identifiable.
 		if item.isDir {
-			itemName += "/"
+			itemName += "/" // Add a slash to directories
 		}
 
-		// Render the final line.
-		s.WriteString(fmt.Sprintf("%s %s\n", cursor, itemName))
+		s.WriteString(fmt.Sprintf("%s %s %s\n", cursor, prefix, itemName))
 	}
+
+	// Add a footer with the count of selected files
+	s.WriteString(fmt.Sprintf("\nZaznaczono %d plików. Naciśnij 'q' aby zakończyć i wypisać ścieżki.", len(m.selected)))
 
 	return s.String()
 }
 
 // main is the entry point for the program.
 func main() {
-	// Determine the starting path. Default to "." (current directory).
 	startPath := "."
-	// If the user provides an argument, use that as the starting path.
 	if len(os.Args) > 1 {
 		startPath = os.Args[1]
 	}
 
-	// Create a new Bubble Tea program.
 	p := tea.NewProgram(initialModel(startPath))
 
-	// Run the program.
-	if _, err := p.Run(); err != nil {
+	// Run returns the final model. We can use it to get the selected files.
+	finalModel, err := p.Run()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("Exited getctx.")
+	// Type assertion to get our specific model type
+	if m, ok := finalModel.(*model); ok {
+		// If any files were selected, print their paths to stdout
+		if len(m.selected) > 0 {
+			for path := range m.selected {
+				fmt.Println(path)
+			}
+		}
+	}
 }
