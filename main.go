@@ -2,10 +2,12 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -24,7 +26,6 @@ type model struct {
 	selected map[string]struct{} // A set of selected file paths
 }
 
-// readDir is a helper function to get the contents of a directory.
 func readDir(path string) ([]item, error) {
 	files, err := os.ReadDir(path)
 	if err != nil {
@@ -53,16 +54,14 @@ func initialModel(startPath string) *model {
 	return &model{
 		path:     path,
 		items:    items,
-		selected: make(map[string]struct{}), // Initialize the map
+		selected: make(map[string]struct{}),
 	}
 }
 
-// Init is the first command that can be run when the program starts.
 func (m *model) Init() tea.Cmd {
 	return nil
 }
 
-// Update handles all user input and events.
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -80,7 +79,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor++
 			}
 
-		// Enter key: Enter a directory
 		case "enter":
 			if len(m.items) == 0 {
 				break
@@ -90,19 +88,16 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				newPath := filepath.Join(m.path, selectedItem.name)
 				newItems, err := readDir(newPath)
 				if err != nil {
-					// In a real app, you might want to show an error message to the user
 					log.Printf("Error reading directory %s: %v", newPath, err)
 					break
 				}
 				m.path = newPath
 				m.items = newItems
-				m.cursor = 0 // Reset cursor to the top of the new directory
+				m.cursor = 0
 			}
 
-		// Backspace key: Go up to the parent directory
 		case "backspace":
 			parentPath := filepath.Dir(m.path)
-			// Avoid going "up" from the root directory
 			if parentPath != m.path {
 				newItems, err := readDir(parentPath)
 				if err != nil {
@@ -114,22 +109,17 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = 0
 			}
 
-		// Space key: Toggle selection for a file
 		case " ":
 			if len(m.items) == 0 {
 				break
 			}
 			selectedItem := m.items[m.cursor]
-			// We can only select files, not directories
 			if !selectedItem.isDir {
 				fullPath := filepath.Join(m.path, selectedItem.name)
-				// Check if the item is already selected
 				if _, ok := m.selected[fullPath]; ok {
-					// If it is, unselect it
 					delete(m.selected, fullPath)
 				} else {
-					// If it's not, select it
-					m.selected[fullPath] = struct{}{} // Use empty struct for set-like behavior
+					m.selected[fullPath] = struct{}{}
 				}
 			}
 		}
@@ -138,50 +128,91 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View is responsible for rendering the UI.
 func (m *model) View() string {
 	var s strings.Builder
 
-	s.WriteString("Wybierz pliki do kontekstu (spacja - zaznacz, enter - wejdź, backspace - cofnij, q - wyjdź)\n")
+	s.WriteString("Wybierz pliki do kontekstu (spacja - zaznacz, enter - wejdź, backspace - cofnij, q - zapisz i wyjdź)\n")
 	s.WriteString("Aktualna ścieżka: " + m.path + "\n\n")
 
 	for i, item := range m.items {
-		cursor := " " // Default cursor
+		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
 		}
 
-		// Determine the prefix for the item (checkbox or empty space)
-		prefix := "   " // Default for directories
+		prefix := "   "
 		if !item.isDir {
 			fullPath := filepath.Join(m.path, item.name)
 			if _, ok := m.selected[fullPath]; ok {
-				prefix = "[x]" // Selected file
+				prefix = "[x]"
 			} else {
-				prefix = "[ ]" // Unselected file
+				prefix = "[ ]"
 			}
 		}
 
-		// Get the item name.
 		itemName := item.name
 		if item.isDir {
-			itemName += "/" // Add a slash to directories
+			itemName += "/"
 		}
 
 		s.WriteString(fmt.Sprintf("%s %s %s\n", cursor, prefix, itemName))
 	}
 
-	// Add a footer with the count of selected files
-	s.WriteString(fmt.Sprintf("\nZaznaczono %d plików. Naciśnij 'q' aby zakończyć i wypisać ścieżki.", len(m.selected)))
+	s.WriteString(fmt.Sprintf("\nZaznaczono %d plików. Naciśnij 'q' aby zapisać i zakończyć.", len(m.selected)))
 
 	return s.String()
 }
 
-// main is the entry point for the program.
+// createContextFile takes a list of file paths and an output file name,
+// and concatenates the content of the source files into the output file.
+func createContextFile(selectedPaths []string, outputFilename string) error {
+	// Create or truncate the output file.
+	outputFile, err := os.Create(outputFilename)
+	if err != nil {
+		return fmt.Errorf("nie udało się stworzyć pliku wyjściowego %s: %w", outputFilename, err)
+	}
+	defer outputFile.Close()
+
+	fmt.Printf("🚀 Rozpoczynam budowanie pliku kontekstu: %s\n", outputFilename)
+
+	// Sort paths for consistent output
+	sort.Strings(selectedPaths)
+
+	for _, path := range selectedPaths {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			fmt.Printf("⚠️ Ostrzeżenie: Nie udało się odczytać pliku %s: %v\n", path, err)
+			continue // Skip this file and continue with others
+		}
+
+		fmt.Printf("   -> Dodawanie zawartości z: %s\n", path)
+
+		header := fmt.Sprintf("--- START OF FILE: %s ---\n", path)
+		footer := fmt.Sprintf("\n--- END OF FILE: %s ---\n\n", path)
+
+		if _, err := outputFile.WriteString(header); err != nil {
+			return fmt.Errorf("błąd zapisu nagłówka dla pliku %s: %w", path, err)
+		}
+		if _, err := outputFile.Write(content); err != nil {
+			return fmt.Errorf("błąd zapisu zawartości dla pliku %s: %w", path, err)
+		}
+		if _, err := outputFile.WriteString(footer); err != nil {
+			return fmt.Errorf("błąd zapisu stopki dla pliku %s: %w", path, err)
+		}
+	}
+
+	return nil
+}
+
 func main() {
+	// Define and parse command-line flags
+	outputFilename := flag.String("o", "context.txt", "Nazwa pliku wyjściowego")
+	flag.Parse()
+
+	// The starting path is the first non-flag argument, or "." if not provided.
 	startPath := "."
-	if len(os.Args) > 1 {
-		startPath = os.Args[1]
+	if flag.NArg() > 0 {
+		startPath = flag.Arg(0)
 	}
 
 	p := tea.NewProgram(initialModel(startPath))
@@ -189,16 +220,28 @@ func main() {
 	// Run returns the final model. We can use it to get the selected files.
 	finalModel, err := p.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("Wystąpił błąd podczas uruchamiania programu: %v", err)
 	}
 
 	// Type assertion to get our specific model type
 	if m, ok := finalModel.(*model); ok {
-		// If any files were selected, print their paths to stdout
-		if len(m.selected) > 0 {
-			for path := range m.selected {
-				fmt.Println(path)
-			}
+		// If no files were selected, inform the user and exit.
+		if len(m.selected) == 0 {
+			fmt.Println("❌ Nie wybrano żadnych plików. Program zakończył działanie.")
+			return
 		}
+
+		// Convert map keys to a slice
+		selectedPaths := make([]string, 0, len(m.selected))
+		for path := range m.selected {
+			selectedPaths = append(selectedPaths, path)
+		}
+
+		// Create the context file
+		if err := createContextFile(selectedPaths, *outputFilename); err != nil {
+			log.Fatalf("Błąd krytyczny podczas tworzenia pliku kontekstu: %v", err)
+		}
+
+		fmt.Printf("✅ Gotowe! Cała zawartość została połączona w pliku %s\n", *outputFilename)
 	}
 }
