@@ -29,9 +29,14 @@ func newModel(startPath string) *model {
 		log.Fatalf("Could not get absolute path for '%s': %v", startPath, err)
 	}
 
-	items, err := readDir(path)
+	dirEntries, err := os.ReadDir(path)
 	if err != nil {
 		log.Fatalf("Could not read directory '%s': %v", path, err)
+	}
+
+	var items []item
+	for _, entry := range dirEntries {
+		items = append(items, item{name: entry.Name(), isDir: entry.IsDir()})
 	}
 
 	return &model{
@@ -39,19 +44,6 @@ func newModel(startPath string) *model {
 		items:    items,
 		selected: make(map[string]struct{}),
 	}
-}
-
-func readDir(path string) ([]item, error) {
-	files, err := os.ReadDir(path)
-	if err != nil {
-		return nil, err
-	}
-
-	var items []item
-	for _, file := range files {
-		items = append(items, item{name: file.Name(), isDir: file.IsDir()})
-	}
-	return items, nil
 }
 
 func (m *model) Init() tea.Cmd {
@@ -64,17 +56,15 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-
+		// ... reszta funkcji Update bez zmian ...
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
 			}
-
 		case "down", "j":
 			if m.cursor < len(m.items)-1 {
 				m.cursor++
 			}
-
 		case "enter":
 			if len(m.items) == 0 {
 				break
@@ -82,29 +72,36 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			selectedItem := m.items[m.cursor]
 			if selectedItem.isDir {
 				newPath := filepath.Join(m.path, selectedItem.name)
-				newItems, err := readDir(newPath)
+				// Aktualizacja: newModel teraz robi mapowanie, więc kod jest czystszy
+				dirEntries, err := os.ReadDir(newPath)
 				if err != nil {
 					log.Printf("Error reading directory %s: %v", newPath, err)
 					break
+				}
+				var newItems []item
+				for _, entry := range dirEntries {
+					newItems = append(newItems, item{name: entry.Name(), isDir: entry.IsDir()})
 				}
 				m.path = newPath
 				m.items = newItems
 				m.cursor = 0
 			}
-
 		case "backspace":
 			parentPath := filepath.Dir(m.path)
 			if parentPath != m.path {
-				newItems, err := readDir(parentPath)
+				dirEntries, err := os.ReadDir(parentPath)
 				if err != nil {
 					log.Printf("Error reading directory %s: %v", parentPath, err)
 					break
+				}
+				var newItems []item
+				for _, entry := range dirEntries {
+					newItems = append(newItems, item{name: entry.Name(), isDir: entry.IsDir()})
 				}
 				m.path = parentPath
 				m.items = newItems
 				m.cursor = 0
 			}
-
 		case " ":
 			if len(m.items) == 0 {
 				break
@@ -118,37 +115,30 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-
 	return m, nil
 }
 
 func (m *model) View() string {
+	// ... funkcja View bez zmian ...
 	var s strings.Builder
-
 	s.WriteString("Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n")
 	s.WriteString("Current path: " + m.path + "\n\n")
-
 	for i, item := range m.items {
 		cursor := " "
 		if m.cursor == i {
 			cursor = ">"
 		}
-
 		fullPath := filepath.Join(m.path, item.name)
 		prefix := "[ ]"
 		if _, ok := m.selected[fullPath]; ok {
 			prefix = "[x]"
 		}
-
 		itemName := item.name
 		if item.isDir {
 			itemName += "/"
 		}
-
 		s.WriteString(fmt.Sprintf("%s %s %s\n", cursor, prefix, itemName))
 	}
-
 	s.WriteString(fmt.Sprintf("\nSelected %d files. Press 'q' to save and exit.", len(m.selected)))
-
 	return s.String()
 }
