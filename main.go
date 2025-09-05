@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -25,20 +24,15 @@ func main() {
 	}
 
 	if m, ok := finalModel.(*model); ok {
-		if len(m.selected) == 0 {
-			fmt.Println("❌ No files selected. Exiting.")
-			return
-		}
 
 		selectedPaths := make([]string, 0, len(m.selected))
 		for path := range m.selected {
 			selectedPaths = append(selectedPaths, path)
 		}
 
-		if err := buildContextFile(selectedPaths, *outputFilename); err != nil {
+		if err := fileContextBuilder(selectedPaths, *outputFilename); err != nil {
 			log.Fatalf("A critical error occurred while creating the context file: %v", err)
 		}
 
-		fmt.Printf("✅ Done! All content has been combined into %s\n", *outputFilename)
 	}
 }

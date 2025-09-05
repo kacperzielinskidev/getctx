@@ -1,4 +1,4 @@
-module getctx-go
+module getctx
 
 go 1.25.0
 

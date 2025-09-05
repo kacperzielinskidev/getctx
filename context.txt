@@ -1,0 +1,27 @@
+--- START OF FILE: /home/kacper/work/playground/getctx-go-testing/index.js ---
+function getName(name) {
+  return name;
+}
+
+getName("getctx");
+
+--- END OF FILE: /home/kacper/work/playground/getctx-go-testing/index.js ---
+
+--- START OF FILE: /home/kacper/work/playground/getctx-go-testing/src/modules/auth/auth.service.js ---
+export class AuthService {
+  getUser() {
+    return "User";
+  }
+}
+
+--- END OF FILE: /home/kacper/work/playground/getctx-go-testing/src/modules/auth/auth.service.js ---
+
+--- START OF FILE: /home/kacper/work/playground/getctx-go-testing/src/utils/env.js ---
+function getEnv() {
+  return "ENV";
+}
+
+getEnv();
+
+--- END OF FILE: /home/kacper/work/playground/getctx-go-testing/src/utils/env.js ---
+

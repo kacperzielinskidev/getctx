@@ -110,13 +110,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				break
 			}
 			selectedItem := m.items[m.cursor]
-			if !selectedItem.isDir {
-				fullPath := filepath.Join(m.path, selectedItem.name)
-				if _, ok := m.selected[fullPath]; ok {
-					delete(m.selected, fullPath)
-				} else {
-					m.selected[fullPath] = struct{}{}
-				}
+			fullPath := filepath.Join(m.path, selectedItem.name)
+			if _, ok := m.selected[fullPath]; ok {
+				delete(m.selected, fullPath)
+			} else {
+				m.selected[fullPath] = struct{}{}
 			}
 		}
 	}
@@ -136,14 +134,10 @@ func (m *model) View() string {
 			cursor = ">"
 		}
 
-		prefix := "   "
-		if !item.isDir {
-			fullPath := filepath.Join(m.path, item.name)
-			if _, ok := m.selected[fullPath]; ok {
-				prefix = "[x]"
-			} else {
-				prefix = "[ ]"
-			}
+		fullPath := filepath.Join(m.path, item.name)
+		prefix := "[ ]"
+		if _, ok := m.selected[fullPath]; ok {
+			prefix = "[x]"
 		}
 
 		itemName := item.name
