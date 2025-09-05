@@ -1,4 +1,3 @@
-// File: fs_utils.go
 package main
 
 import (

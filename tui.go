@@ -1,4 +1,3 @@
-// File: tui.go
 package main
 
 import (
