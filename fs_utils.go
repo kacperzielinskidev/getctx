@@ -11,11 +11,6 @@ import (
 	"strings"
 )
 
-// Funkcja readDir została usunięta, ponieważ była zbędną abstrakcją.
-// Należy używać os.ReadDir bezpośrednio.
-
-// discoverFiles rekurencyjnie przeszukuje podane ścieżki (pliki i katalogi),
-// znajduje wszystkie pliki i klasyfikuje je jako tekstowe lub binarne.
 func discoverFiles(paths []string) ([]processedFile, error) {
 	var allFiles []processedFile
 
@@ -58,8 +53,6 @@ func discoverFiles(paths []string) ([]processedFile, error) {
 	return allFiles, nil
 }
 
-// isTextFile sprawdza, czy plik jest prawdopodobnie plikiem tekstowym.
-// Nazwa jest już zgodna z konwencjami Go i pozostaje bez zmian.
 func isTextFile(path string) (bool, error) {
 	file, err := os.Open(path)
 	if err != nil {

@@ -56,7 +56,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
-		// ... reszta funkcji Update bez zmian ...
 		case "up", "k":
 			if m.cursor > 0 {
 				m.cursor--
@@ -72,7 +71,6 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			selectedItem := m.items[m.cursor]
 			if selectedItem.isDir {
 				newPath := filepath.Join(m.path, selectedItem.name)
-				// Aktualizacja: newModel teraz robi mapowanie, więc kod jest czystszy
 				dirEntries, err := os.ReadDir(newPath)
 				if err != nil {
 					log.Printf("Error reading directory %s: %v", newPath, err)
@@ -119,25 +117,43 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *model) View() string {
-	// ... funkcja View bez zmian ...
 	var s strings.Builder
 	s.WriteString("Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n")
 	s.WriteString("Current path: " + m.path + "\n\n")
+
 	for i, item := range m.items {
 		cursor := " "
 		if m.cursor == i {
-			cursor = ">"
+			cursor = Icons.Cursor
 		}
+
 		fullPath := filepath.Join(m.path, item.name)
-		prefix := "[ ]"
-		if _, ok := m.selected[fullPath]; ok {
-			prefix = "[x]"
+		_, ok := m.selected[fullPath]
+
+		prefix := "  "
+		if ok {
+			prefix = Icons.Checkmark + " "
 		}
+
+		itemIcon := Icons.File
+		if item.isDir {
+			itemIcon = Icons.Directory
+		}
+
 		itemName := item.name
 		if item.isDir {
 			itemName += "/"
 		}
-		s.WriteString(fmt.Sprintf("%s %s %s\n", cursor, prefix, itemName))
+		line := fmt.Sprintf("%s %s%s %s", cursor, prefix, itemIcon, itemName)
+
+		if ok {
+			s.WriteString(Styles.Selected.Render(line))
+		} else if m.cursor == i {
+			s.WriteString(Styles.Cursor.Render(line))
+		} else {
+			s.WriteString(line)
+		}
+		s.WriteString("\n")
 	}
 	s.WriteString(fmt.Sprintf("\nSelected %d files. Press 'q' to save and exit.", len(m.selected)))
 	return s.String()

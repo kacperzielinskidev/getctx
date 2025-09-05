@@ -49,7 +49,6 @@ func contextBuilder(selectedPaths []string, outputFilename string) error {
 		if file.IsText {
 			fmt.Printf("   -> Adding content from: %s\n", file.Path)
 		} else {
-			// Używamy Colors.Reset zamiast zhardkodowanego stringa
 			fmt.Printf("   -> %sSkipped content from: %s%s\n", Colors.Red, file.Path, Colors.Reset)
 		}
 	}
