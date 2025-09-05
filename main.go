@@ -1,3 +1,4 @@
+// File: main.go
 package main
 
 import (
@@ -24,15 +25,9 @@ func main() {
 	}
 
 	if m, ok := finalModel.(*model); ok {
-
-		selectedPaths := make([]string, 0, len(m.selected))
-		for path := range m.selected {
-			selectedPaths = append(selectedPaths, path)
-		}
-
-		if err := fileContextBuilder(selectedPaths, *outputFilename); err != nil {
+		if err := HandleContextBuilder(m, *outputFilename); err != nil {
 			log.Fatalf("A critical error occurred while creating the context file: %v", err)
 		}
-
 	}
+
 }

@@ -1,4 +1,3 @@
-// File: file_builder.go
 package main
 
 import (
@@ -12,20 +11,55 @@ import (
 	"strings"
 )
 
-func fileContextBuilder(selectedPaths []string, outputFilename string) error {
+type processedFile struct {
+	Path   string
+	IsText bool
+}
 
-	allFilePaths, skippedBinaryCount, err := expandPaths(selectedPaths)
-	if err != nil {
-		return fmt.Errorf("error expanding selected paths: %w", err)
-
+func HandleContextBuilder(m *model, outputFilename string) error {
+	if len(m.selected) == 0 {
+		fmt.Printf("%s No items selected. Exiting.\n", Icons.Error)
+		return nil
 	}
 
-	if len(allFilePaths) == 0 {
-		if skippedBinaryCount > 0 {
-			fmt.Printf("ℹ️ No text files found to include. %d binary file(s) were skipped.\n", skippedBinaryCount)
-		} else {
-			fmt.Println("ℹ️ No text files found in the selected paths. Output file was not created.")
+	selectedPaths := make([]string, 0, len(m.selected))
+	for path := range m.selected {
+		selectedPaths = append(selectedPaths, path)
+	}
+
+	return fileContextBuilder(selectedPaths, outputFilename)
+
+}
+
+func fileContextBuilder(selectedPaths []string, outputFilename string) error {
+	processedFiles, err := expandPaths(selectedPaths)
+	if err != nil {
+		return fmt.Errorf("error expanding selected paths: %w", err)
+	}
+
+	sort.Slice(processedFiles, func(i, j int) bool {
+		return processedFiles[i].Path < processedFiles[j].Path
+	})
+
+	var textFiles []processedFile
+	for _, file := range processedFiles {
+		if file.IsText {
+			textFiles = append(textFiles, file)
 		}
+	}
+
+	fmt.Printf("%s Building context file: %s\n", Icons.Building, outputFilename)
+
+	for _, file := range processedFiles {
+		if file.IsText {
+			fmt.Printf("   -> Adding content from: %s\n", file.Path)
+		} else {
+			fmt.Printf("   -> %sSkipped content from: %s%s\n", Colors.Red, file.Path, Colors.Reset)
+		}
+	}
+
+	if len(textFiles) == 0 {
+		fmt.Printf("\n%s No text files found to include. Output file was not created.\n", Icons.Info)
 		return nil
 	}
 
@@ -35,114 +69,84 @@ func fileContextBuilder(selectedPaths []string, outputFilename string) error {
 	}
 	defer outputFile.Close()
 
-	fmt.Printf("🚀 Building context file: %s\n", outputFilename)
-
-	sort.Strings(allFilePaths)
-
-	for _, path := range allFilePaths {
-		content, err := os.ReadFile(path)
+	for _, file := range textFiles {
+		content, err := os.ReadFile(file.Path)
 		if err != nil {
-			fmt.Printf("⚠️ Warning: Failed to read file %s: %v\n", path, err)
+			fmt.Printf("%s Warning: Failed to read file %s: %v\n", Icons.Warning, file.Path, err)
 			continue
 		}
 
-		fmt.Printf("   -> Adding content from: %s\n", path)
-
-		header := fmt.Sprintf("--- START OF FILE: %s ---\n", path)
-		footer := fmt.Sprintf("\n--- END OF FILE: %s ---\n\n", path)
+		header := fmt.Sprintf("--- START OF FILE: %s ---\n", file.Path)
+		footer := fmt.Sprintf("\n--- END OF FILE: %s ---\n\n", file.Path)
 
 		if _, err := outputFile.WriteString(header); err != nil {
-			return fmt.Errorf("error writing header for file %s: %w", path, err)
+			return fmt.Errorf("error writing header for file %s: %w", file.Path, err)
 		}
 		if _, err := outputFile.Write(content); err != nil {
-			return fmt.Errorf("error writing content for file %s: %w", path, err)
+			return fmt.Errorf("error writing content for file %s: %w", file.Path, err)
 		}
 		if _, err := outputFile.WriteString(footer); err != nil {
-			return fmt.Errorf("error writing footer for file %s: %w", path, err)
+			return fmt.Errorf("error writing footer for file %s: %w", file.Path, err)
 		}
 	}
 
-	fmt.Printf("✅ Done! All content has been combined into %s\n", outputFilename)
-
+	fmt.Printf("%s Done! All content has been combined into %s\n", Icons.Done, outputFilename)
 	return nil
 }
 
-func expandPaths(paths []string) (textFiles []string, skippedCount int, err error) {
-	fileSet := make(map[string]struct{})
+func expandPaths(paths []string) ([]processedFile, error) {
+	var allFiles []processedFile
 
 	for _, path := range paths {
 		info, err := os.Stat(path)
 		if err != nil {
-			fmt.Printf("⚠️ Warning: Could not stat path %s: %v\n", path, err)
+			fmt.Printf("%s Warning: Could not stat path %s: %v\n", Icons.Warning, path, err)
 			continue
 		}
-
 		if info.IsDir() {
 			err := filepath.WalkDir(path, func(subPath string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
-
 				if !d.IsDir() {
 					isText, err := isTextFile(subPath)
 					if err != nil {
-						fmt.Printf("⚠️ Warning: Could not determine file type for %s: %v\n", subPath, err)
+						fmt.Printf("%s Warning: Could not determine file type for %s: %v\n", Icons.Warning, subPath, err)
+						allFiles = append(allFiles, processedFile{Path: subPath, IsText: false})
 						return nil
 					}
-
-					if isText {
-						fileSet[subPath] = struct{}{}
-					} else {
-						skippedCount++
-					}
-
+					allFiles = append(allFiles, processedFile{Path: subPath, IsText: isText})
 				}
 				return nil
 			})
-
 			if err != nil {
-				fmt.Printf("⚠️ Warning: Error walking directory %s: %v\n", path, err)
-
+				fmt.Printf("%s Warning: Error walking directory %s: %v\n", Icons.Warning, path, err)
 			}
 		} else {
 			isText, err := isTextFile(path)
 			if err != nil {
-				fmt.Printf("⚠️ Warning: Could not determine file type for %s: %v\n", path, err)
-
-			} else if isText {
-
-				fileSet[path] = struct{}{}
+				fmt.Printf("%s Warning: Could not determine file type for %s: %v\n", Icons.Warning, path, err)
+				allFiles = append(allFiles, processedFile{Path: path, IsText: false})
 			} else {
-				skippedCount++
+				allFiles = append(allFiles, processedFile{Path: path, IsText: isText})
 			}
-
 		}
 	}
 
-	// Konwertuj mapę (set) z powrotem na plasterek (slice)
-	finalPaths := make([]string, 0, len(fileSet))
-	for path := range fileSet {
-		finalPaths = append(finalPaths, path)
-	}
-
-	return finalPaths, skippedCount, nil
+	return allFiles, nil
 }
 
 func isTextFile(path string) (bool, error) {
 	file, err := os.Open(path)
-
 	if err != nil {
 		return false, err
 	}
 	defer file.Close()
-
 	buffer := make([]byte, 512)
 	n, err := file.Read(buffer)
 	if err != nil && err != io.EOF {
 		return false, err
 	}
-
 	contentType := http.DetectContentType(buffer[:n])
-
 	return strings.HasPrefix(contentType, "text/"), nil
 }
