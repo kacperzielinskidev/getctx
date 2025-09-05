@@ -47,9 +47,10 @@ func contextBuilder(selectedPaths []string, outputFilename string) error {
 
 	for _, file := range processedFiles {
 		if file.IsText {
-			fmt.Printf("   -> Adding content from: %s\n", file.Path)
+			fmt.Printf("   %s Adding content from: %s\n", Icons.Cursor, file.Path)
+
 		} else {
-			fmt.Printf("   -> %sSkipped content from: %s%s\n", Colors.Red, file.Path, Colors.Reset)
+			fmt.Printf("   %s %sSkipped content from: %s%s\n", Icons.Cursor, Colors.Red, file.Path, Colors.Reset)
 		}
 	}
 

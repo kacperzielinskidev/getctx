@@ -54,7 +54,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+c":
+			m.selected = make(map[string]struct{})
+			return m, tea.Quit
+
+		case "q":
 			return m, tea.Quit
 		case "up", "k":
 			if m.cursor > 0 {
