@@ -54,21 +54,25 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c":
+
+		case KeyCtrlC:
 			m.selected = make(map[string]struct{})
 			return m, tea.Quit
 
-		case "q":
+		case KeyQ:
 			return m, tea.Quit
-		case "up", "k":
+
+		case KeyUp:
 			if m.cursor > 0 {
 				m.cursor--
 			}
-		case "down", "j":
+
+		case KeyDown:
 			if m.cursor < len(m.items)-1 {
 				m.cursor++
 			}
-		case "enter":
+
+		case KeyEnter:
 			if len(m.items) == 0 {
 				break
 			}
@@ -88,7 +92,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.items = newItems
 				m.cursor = 0
 			}
-		case "backspace":
+
+		case KeyBackspace:
 			parentPath := filepath.Dir(m.path)
 			if parentPath != m.path {
 				dirEntries, err := os.ReadDir(parentPath)
@@ -104,7 +109,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.items = newItems
 				m.cursor = 0
 			}
-		case " ":
+
+		case KeySpace:
 			if len(m.items) == 0 {
 				break
 			}
@@ -115,7 +121,33 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.selected[fullPath] = struct{}{}
 			}
+
+		case KeyCtrlA:
+			allSelected := true
+			if len(m.items) == 0 {
+				allSelected = false
+			}
+			for _, item := range m.items {
+				fullPath := filepath.Join(m.path, item.name)
+				if _, ok := m.selected[fullPath]; !ok {
+					allSelected = false
+					break
+				}
+			}
+
+			if allSelected {
+				for _, item := range m.items {
+					fullPath := filepath.Join(m.path, item.name)
+					delete(m.selected, fullPath)
+				}
+			} else {
+				for _, item := range m.items {
+					fullPath := filepath.Join(m.path, item.name)
+					m.selected[fullPath] = struct{}{}
+				}
+			}
 		}
+
 	}
 	return m, nil
 }
