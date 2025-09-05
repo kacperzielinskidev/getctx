@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ type processedFile struct {
 	IsText bool
 }
 
-func HandleContextBuilder(m *model, outputFilename string) error {
+func HandleContextBuilder(m *Model, outputFilename string) error {
 	if len(m.selected) == 0 {
 		fmt.Printf("%s No items selected. Exiting.\n", Icons.Error)
 		return nil

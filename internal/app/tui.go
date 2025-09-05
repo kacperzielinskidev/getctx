@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -15,14 +15,14 @@ type item struct {
 	isDir bool
 }
 
-type model struct {
+type Model struct {
 	path     string
 	items    []item
 	cursor   int
 	selected map[string]struct{}
 }
 
-func newModel(startPath string) *model {
+func NewModel(startPath string) *Model {
 	path, err := filepath.Abs(startPath)
 	if err != nil {
 		log.Fatalf("Could not get absolute path for '%s': %v", startPath, err)
@@ -38,18 +38,18 @@ func newModel(startPath string) *model {
 		items = append(items, item{name: entry.Name(), isDir: entry.IsDir()})
 	}
 
-	return &model{
+	return &Model{
 		path:     path,
 		items:    items,
 		selected: make(map[string]struct{}),
 	}
 }
 
-func (m *model) Init() tea.Cmd {
+func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -151,7 +151,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *model) View() string {
+func (m *Model) View() string {
 	var s strings.Builder
 	s.WriteString("Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n")
 	s.WriteString("Current path: " + m.path + "\n\n")
