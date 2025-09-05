@@ -50,7 +50,9 @@ func contextBuilder(selectedPaths []string, outputFilename string) error {
 			fmt.Printf("   %s Adding content from: %s\n", Icons.Cursor, file.Path)
 
 		} else {
-			fmt.Printf("   %s %sSkipped content from: %s%s\n", Icons.Cursor, Colors.Red, file.Path, Colors.Reset)
+			skippedMessage := fmt.Sprintf("Skipped content from: %s", file.Path)
+			fmt.Printf("   %s %s\n", Icons.Cursor, Styles.Log.Skipped.Render(skippedMessage))
+
 		}
 	}
 

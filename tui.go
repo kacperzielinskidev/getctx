@@ -182,9 +182,9 @@ func (m *model) View() string {
 		line := fmt.Sprintf("%s %s%s %s", cursor, prefix, itemIcon, itemName)
 
 		if ok {
-			s.WriteString(Styles.Selected.Render(line))
+			s.WriteString(Styles.List.Selected.Render(line))
 		} else if m.cursor == i {
-			s.WriteString(Styles.Cursor.Render(line))
+			s.WriteString(Styles.List.Cursor.Render(line))
 		} else {
 			s.WriteString(line)
 		}

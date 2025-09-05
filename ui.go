@@ -2,7 +2,12 @@ package main
 
 import "github.com/charmbracelet/lipgloss"
 
-type UIIcons struct {
+const (
+	colorGreen lipgloss.Color = "34"
+	colorRed   lipgloss.Color = "9"
+)
+
+type TUIIcons struct {
 	Building  string
 	Done      string
 	Warning   string
@@ -14,22 +19,31 @@ type UIIcons struct {
 	Cursor    string
 }
 
-type UIColors struct {
-	Red   string
-	Reset string
+type TUIColors struct {
+	Green lipgloss.Color
+	Red   lipgloss.Color
 }
 
-type UIStyles struct {
+type TUIListStyles struct {
 	Selected lipgloss.Style
 	Cursor   lipgloss.Style
 }
 
-var Icons UIIcons
-var Colors UIColors
-var Styles UIStyles
+type TUILogStyles struct {
+	Skipped lipgloss.Style
+}
+
+type TUIStyles struct {
+	List TUIListStyles
+	Log  TUILogStyles
+}
+
+var Icons TUIIcons
+var Colors TUIColors
+var Styles TUIStyles
 
 func init() {
-	Icons = UIIcons{
+	Icons = TUIIcons{
 		Building:  "🚀",
 		Done:      "✅",
 		Warning:   "⚠️",
@@ -41,13 +55,18 @@ func init() {
 		Cursor:    "❯",
 	}
 
-	Colors = UIColors{
-		Red:   "\033[31m",
-		Reset: "\033[0m",
+	Colors = TUIColors{
+		Green: colorGreen,
+		Red:   colorRed,
 	}
 
-	Styles = UIStyles{
-		Selected: lipgloss.NewStyle().Foreground(lipgloss.Color("34")), // "34" to kod koloru zielonego
-		Cursor:   lipgloss.NewStyle().Bold(true),
+	Styles = TUIStyles{
+		List: TUIListStyles{
+			Selected: lipgloss.NewStyle().Foreground(Colors.Green),
+			Cursor:   lipgloss.NewStyle().Bold(true),
+		},
+		Log: TUILogStyles{
+			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),
+		},
 	}
 }
