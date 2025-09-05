@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	// TODO: Move from the main.go
 	outputFilename := flag.String("o", "context.txt", "The name of the output file")
 	flag.Parse()
 
