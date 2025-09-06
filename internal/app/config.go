@@ -24,4 +24,6 @@ var ExcludedNames = map[string]struct{}{
 	"build":  {},
 	".cache": {},
 	"target": {},
+
+	".env": {},
 }
