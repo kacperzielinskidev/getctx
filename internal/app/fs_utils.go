@@ -10,8 +10,9 @@ import (
 	"strings"
 )
 
-func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string, error) {
+func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string, []string, error) {
 	var discoveredPaths []string
+	var warnings []string
 
 	for _, path := range paths {
 		if _, ok := excludedNames[filepath.Base(path)]; ok {
@@ -20,7 +21,7 @@ func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string,
 
 		info, err := os.Stat(path)
 		if err != nil {
-			fmt.Printf("%s Warning: Could not stat path %s: %v\n", Icons.Warning, path, err)
+			warnings = append(warnings, fmt.Sprintf("Could not stat path %s: %v", path, err))
 			continue
 		}
 
@@ -43,14 +44,14 @@ func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string,
 				return nil
 			})
 			if err != nil {
-				fmt.Printf("%s Warning: Error walking directory %s: %v\n", Icons.Warning, path, err)
+				warnings = append(warnings, fmt.Sprintf("Error walking directory %s: %v", path, err))
 			}
 		} else {
 			discoveredPaths = append(discoveredPaths, path)
 		}
 	}
 
-	return discoveredPaths, nil
+	return discoveredPaths, warnings, nil
 }
 
 func isTextFile(path string) (bool, error) {

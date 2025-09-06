@@ -23,14 +23,24 @@ func HandleContextBuilder(m *Model, outputFilename string) error {
 
 func contextBuilder(selectedPaths []string, outputFilename string, config *Config) error {
 
-	acceptableFiles, err := discoverFiles(selectedPaths, config.ExcludedNames)
+	acceptableFiles, warnings, err := discoverFiles(selectedPaths, config.ExcludedNames)
 	if err != nil {
 		return fmt.Errorf("error discovering files: %w", err)
+	}
+	if len(warnings) > 0 {
+		fmt.Printf("%s Some paths were skipped due to errors:\n", Icons.Warning)
+		for _, warn := range warnings {
+			fmt.Printf("   - %s\n", warn)
+		}
 	}
 
 	var textFiles []string
 	for _, path := range acceptableFiles {
-		isText, _ := isTextFile(path)
+		isText, err := isTextFile(path)
+		if err != nil {
+			fmt.Printf("%s Warning: Could not check file type for %s: %v\n", Icons.Warning, path, err)
+			continue
+		}
 		if isText {
 			textFiles = append(textFiles, path)
 		}
