@@ -23,6 +23,23 @@ type Model struct {
 	selected map[string]struct{}
 }
 
+func loadItems(path string) ([]item, error) {
+	dirEntries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []item
+	for _, entry := range dirEntries {
+		items = append(items, item{
+			name:       entry.Name(),
+			isDir:      entry.IsDir(),
+			isExcluded: isExcluded(entry.Name()),
+		})
+	}
+	return items, nil
+}
+
 func NewModel(startPath string) *Model {
 	path, err := filepath.Abs(startPath)
 	if err != nil {
@@ -57,64 +74,49 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		currentItem := m.items[m.cursor]
+		var currentItem item
+		if len(m.items) > 0 {
+			currentItem = m.items[m.cursor]
+		}
 
 		switch msg.String() {
-		case KeyCtrlC:
-			m.selected = make(map[string]struct{})
+		case KeyCtrlC, KeyQ:
+			if msg.String() == KeyCtrlC {
+				m.selected = make(map[string]struct{})
+			}
 			return m, tea.Quit
-
-		case KeyQ:
-			return m, tea.Quit
-
 		case KeyUp:
 			if m.cursor > 0 {
 				m.cursor--
 			}
-
 		case KeyDown:
 			if m.cursor < len(m.items)-1 {
 				m.cursor++
 			}
-
 		case KeyEnter:
 			if currentItem.isDir && !currentItem.isExcluded {
-
-				selectedItem := m.items[m.cursor]
-				if selectedItem.isDir {
-					newPath := filepath.Join(m.path, selectedItem.name)
-					dirEntries, err := os.ReadDir(newPath)
-					if err != nil {
-						log.Printf("Error reading directory %s: %v", newPath, err)
-						break
-					}
-					var newItems []item
-					for _, entry := range dirEntries {
-						newItems = append(newItems, item{name: entry.Name(), isDir: entry.IsDir()})
-					}
-					m.path = newPath
-					m.items = newItems
-					m.cursor = 0
+				newPath := filepath.Join(m.path, currentItem.name)
+				newItems, err := loadItems(newPath)
+				if err != nil {
+					log.Printf("Error reading directory %s: %v", newPath, err)
+					break
 				}
+				m.path = newPath
+				m.items = newItems
+				m.cursor = 0
 			}
-
 		case KeyBackspace:
 			parentPath := filepath.Dir(m.path)
 			if parentPath != m.path {
-				dirEntries, err := os.ReadDir(parentPath)
+				newItems, err := loadItems(parentPath)
 				if err != nil {
 					log.Printf("Error reading directory %s: %v", parentPath, err)
 					break
-				}
-				var newItems []item
-				for _, entry := range dirEntries {
-					newItems = append(newItems, item{name: entry.Name(), isDir: entry.IsDir()})
 				}
 				m.path = parentPath
 				m.items = newItems
 				m.cursor = 0
 			}
-
 		case KeySpace:
 			if !currentItem.isExcluded {
 				fullPath := filepath.Join(m.path, currentItem.name)
@@ -124,7 +126,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.selected[fullPath] = struct{}{}
 				}
 			}
-
 		case KeyCtrlA:
 			allSelectableAreSelected := true
 			hasSelectableItems := false
@@ -138,11 +139,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
-
 			if !hasSelectableItems {
 				break
 			}
-
 			if allSelectableAreSelected {
 				for _, item := range m.items {
 					if !item.isExcluded {
@@ -160,7 +159,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-
 	return m, nil
 }
 
