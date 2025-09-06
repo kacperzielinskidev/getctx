@@ -17,6 +17,7 @@ type TUIIcons struct {
 	File      string
 	Checkmark string
 	Cursor    string
+	Excluded  string
 }
 
 type TUIColors struct {
@@ -27,6 +28,7 @@ type TUIColors struct {
 type TUIListStyles struct {
 	Selected lipgloss.Style
 	Cursor   lipgloss.Style
+	Excluded lipgloss.Style
 }
 
 type TUILogStyles struct {
@@ -53,6 +55,7 @@ func init() {
 		File:      "📄",
 		Checkmark: "✔",
 		Cursor:    "❯",
+		Excluded:  "🚫",
 	}
 
 	Colors = TUIColors{
@@ -64,6 +67,7 @@ func init() {
 		List: TUIListStyles{
 			Selected: lipgloss.NewStyle().Foreground(Colors.Green),
 			Cursor:   lipgloss.NewStyle().Bold(true),
+			Excluded: lipgloss.NewStyle().Faint(true),
 		},
 		Log: TUILogStyles{
 			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),

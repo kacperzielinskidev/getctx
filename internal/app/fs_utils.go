@@ -10,28 +10,40 @@ import (
 	"strings"
 )
 
-func discoverFiles(paths []string) ([]processedFile, error) {
-	var allFiles []processedFile
+func isExcluded(name string) bool {
+	_, found := ExcludedNames[name]
+	return found
+}
+
+func discoverFiles(paths []string) ([]string, error) {
+	var discoveredPaths []string
 
 	for _, path := range paths {
+		if isExcluded(filepath.Base(path)) {
+			continue
+		}
+
 		info, err := os.Stat(path)
 		if err != nil {
 			fmt.Printf("%s Warning: Could not stat path %s: %v\n", Icons.Warning, path, err)
 			continue
 		}
+
 		if info.IsDir() {
 			err := filepath.WalkDir(path, func(subPath string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
-				if !d.IsDir() {
-					isText, err := isTextFile(subPath)
-					if err != nil {
-						fmt.Printf("%s Warning: Could not determine file type for %s: %v\n", Icons.Warning, subPath, err)
-						allFiles = append(allFiles, processedFile{Path: subPath, IsText: false})
-						return nil
+
+				if isExcluded(d.Name()) {
+					if d.IsDir() {
+						return filepath.SkipDir
 					}
-					allFiles = append(allFiles, processedFile{Path: subPath, IsText: isText})
+					return nil
+				}
+
+				if !d.IsDir() {
+					discoveredPaths = append(discoveredPaths, subPath)
 				}
 				return nil
 			})
@@ -39,17 +51,11 @@ func discoverFiles(paths []string) ([]processedFile, error) {
 				fmt.Printf("%s Warning: Error walking directory %s: %v\n", Icons.Warning, path, err)
 			}
 		} else {
-			isText, err := isTextFile(path)
-			if err != nil {
-				fmt.Printf("%s Warning: Could not determine file type for %s: %v\n", Icons.Warning, path, err)
-				allFiles = append(allFiles, processedFile{Path: path, IsText: false})
-			} else {
-				allFiles = append(allFiles, processedFile{Path: path, IsText: isText})
-			}
+			discoveredPaths = append(discoveredPaths, path)
 		}
 	}
 
-	return allFiles, nil
+	return discoveredPaths, nil
 }
 
 func isTextFile(path string) (bool, error) {
