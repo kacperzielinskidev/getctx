@@ -10,16 +10,11 @@ import (
 	"strings"
 )
 
-func isExcluded(name string) bool {
-	_, found := ExcludedNames[name]
-	return found
-}
-
-func discoverFiles(paths []string) ([]string, error) {
+func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string, error) {
 	var discoveredPaths []string
 
 	for _, path := range paths {
-		if isExcluded(filepath.Base(path)) {
+		if _, ok := excludedNames[filepath.Base(path)]; ok {
 			continue
 		}
 
@@ -35,7 +30,7 @@ func discoverFiles(paths []string) ([]string, error) {
 					return err
 				}
 
-				if isExcluded(d.Name()) {
+				if _, ok := excludedNames[d.Name()]; ok {
 					if d.IsDir() {
 						return filepath.SkipDir
 					}

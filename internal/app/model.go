@@ -21,9 +21,10 @@ type Model struct {
 	items    []item
 	cursor   int
 	selected map[string]struct{}
+	config   *Config
 }
 
-func loadItems(path string) ([]item, error) {
+func loadItems(path string, config *Config) ([]item, error) {
 	dirEntries, err := os.ReadDir(path)
 	if err != nil {
 		return nil, err
@@ -34,33 +35,29 @@ func loadItems(path string) ([]item, error) {
 		items = append(items, item{
 			name:       entry.Name(),
 			isDir:      entry.IsDir(),
-			isExcluded: isExcluded(entry.Name()),
+			isExcluded: config.IsExcluded(entry.Name()),
 		})
 	}
 	return items, nil
 }
 
-func NewModel(startPath string) *Model {
+func NewModel(startPath string, config *Config) (*Model, error) {
 	path, err := filepath.Abs(startPath)
 	if err != nil {
-		log.Fatalf("Could not get absolute path for '%s': %v", startPath, err)
+		return nil, fmt.Errorf("could not get absolute path for '%s': %w", startPath, err)
 	}
 
-	dirEntries, err := os.ReadDir(path)
+	items, err := loadItems(path, config)
 	if err != nil {
-		log.Fatalf("Could not read directory '%s': %v", path, err)
-	}
-
-	var items []item
-	for _, entry := range dirEntries {
-		items = append(items, item{name: entry.Name(), isDir: entry.IsDir(), isExcluded: isExcluded(entry.Name())})
+		return nil, fmt.Errorf("could not read directory '%s': %w", path, err)
 	}
 
 	return &Model{
 		path:     path,
 		items:    items,
 		selected: make(map[string]struct{}),
-	}
+		config:   config,
+	}, nil
 }
 
 func (m *Model) Init() tea.Cmd {
@@ -74,11 +71,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 
-		var currentItem item
-		if len(m.items) > 0 {
-			currentItem = m.items[m.cursor]
-		}
-
 		switch msg.String() {
 		case KeyCtrlC, KeyQ:
 			if msg.String() == KeyCtrlC {
@@ -86,77 +78,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, tea.Quit
 		case KeyUp:
-			if m.cursor > 0 {
-				m.cursor--
-			}
+			m.handleKeyUp()
 		case KeyDown:
-			if m.cursor < len(m.items)-1 {
-				m.cursor++
-			}
+			m.handleKeyDown()
 		case KeyEnter:
-			if currentItem.isDir && !currentItem.isExcluded {
-				newPath := filepath.Join(m.path, currentItem.name)
-				newItems, err := loadItems(newPath)
-				if err != nil {
-					log.Printf("Error reading directory %s: %v", newPath, err)
-					break
-				}
-				m.path = newPath
-				m.items = newItems
-				m.cursor = 0
-			}
+			m.handleEnter()
 		case KeyBackspace:
-			parentPath := filepath.Dir(m.path)
-			if parentPath != m.path {
-				newItems, err := loadItems(parentPath)
-				if err != nil {
-					log.Printf("Error reading directory %s: %v", parentPath, err)
-					break
-				}
-				m.path = parentPath
-				m.items = newItems
-				m.cursor = 0
-			}
+			m.handleBackspace()
 		case KeySpace:
-			if !currentItem.isExcluded {
-				fullPath := filepath.Join(m.path, currentItem.name)
-				if _, ok := m.selected[fullPath]; ok {
-					delete(m.selected, fullPath)
-				} else {
-					m.selected[fullPath] = struct{}{}
-				}
-			}
+			m.handleSpace()
 		case KeyCtrlA:
-			allSelectableAreSelected := true
-			hasSelectableItems := false
-			for _, item := range m.items {
-				if !item.isExcluded {
-					hasSelectableItems = true
-					fullPath := filepath.Join(m.path, item.name)
-					if _, ok := m.selected[fullPath]; !ok {
-						allSelectableAreSelected = false
-						break
-					}
-				}
-			}
-			if !hasSelectableItems {
-				break
-			}
-			if allSelectableAreSelected {
-				for _, item := range m.items {
-					if !item.isExcluded {
-						fullPath := filepath.Join(m.path, item.name)
-						delete(m.selected, fullPath)
-					}
-				}
-			} else {
-				for _, item := range m.items {
-					if !item.isExcluded {
-						fullPath := filepath.Join(m.path, item.name)
-						m.selected[fullPath] = struct{}{}
-					}
-				}
-			}
+			m.handleCtrlA()
 		}
 	}
 	return m, nil
@@ -164,11 +96,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) View() string {
 	var s strings.Builder
-	s.WriteString("Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n")
-	s.WriteString("Current path: " + m.path + "\n\n")
+	s.WriteString(Elements.Text.HelpHeader)
+	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
 
 	for i, item := range m.items {
-		cursor := " "
+		cursor := Elements.List.CursorEmpty
 		if m.cursor == i {
 			cursor = Icons.Cursor
 		}
@@ -176,16 +108,16 @@ func (m *Model) View() string {
 		var prefix, itemIcon string
 
 		if item.isExcluded {
-			prefix = "  "
+			prefix = Elements.List.UnselectedPrefix
 			itemIcon = Icons.Excluded
 		} else {
 			fullPath := filepath.Join(m.path, item.name)
 			_, isSelected := m.selected[fullPath]
 
 			if isSelected {
-				prefix = Icons.Checkmark + " "
+				prefix = Elements.List.SelectedPrefix
 			} else {
-				prefix = "  "
+				prefix = Elements.List.UnselectedPrefix
 			}
 
 			if item.isDir {
@@ -197,7 +129,7 @@ func (m *Model) View() string {
 
 		itemName := item.name
 		if item.isDir {
-			itemName += "/"
+			itemName += Elements.List.DirectorySuffix
 		}
 		line := fmt.Sprintf("%s %s%s %s", cursor, prefix, itemIcon, itemName)
 
@@ -215,6 +147,100 @@ func (m *Model) View() string {
 		}
 		s.WriteString("\n")
 	}
-	s.WriteString(fmt.Sprintf("\nSelected %d items. Press 'q' to save and exit.", len(m.selected)))
+	s.WriteString(fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected)))
 	return s.String()
+}
+
+func (m *Model) handleKeyUp() {
+	if m.cursor > 0 {
+		m.cursor--
+	}
+}
+
+func (m *Model) handleKeyDown() {
+	if m.cursor < len(m.items)-1 {
+		m.cursor++
+	}
+}
+
+func (m *Model) handleEnter() {
+	if len(m.items) == 0 {
+		return
+	}
+	currentItem := m.items[m.cursor]
+	if currentItem.isDir && !currentItem.isExcluded {
+		newPath := filepath.Join(m.path, currentItem.name)
+		newItems, err := loadItems(newPath, m.config)
+		if err != nil {
+			log.Printf("Error reading directory %s: %v", newPath, err)
+			return
+		}
+		m.path = newPath
+		m.items = newItems
+		m.cursor = 0
+	}
+}
+
+func (m *Model) handleBackspace() {
+	parentPath := filepath.Dir(m.path)
+	if parentPath != m.path {
+		newItems, err := loadItems(parentPath, m.config)
+		if err != nil {
+			log.Printf("Error reading directory %s: %v", parentPath, err)
+			return
+		}
+		m.path = parentPath
+		m.items = newItems
+		m.cursor = 0
+	}
+}
+
+func (m *Model) handleSpace() {
+	if len(m.items) == 0 {
+		return
+	}
+	currentItem := m.items[m.cursor]
+	if !currentItem.isExcluded {
+		fullPath := filepath.Join(m.path, currentItem.name)
+		if _, ok := m.selected[fullPath]; ok {
+			delete(m.selected, fullPath)
+		} else {
+			m.selected[fullPath] = struct{}{}
+		}
+	}
+}
+
+func (m *Model) handleCtrlA() {
+	allSelectableAreSelected := true
+	hasSelectableItems := false
+	for _, item := range m.items {
+		if !item.isExcluded {
+			hasSelectableItems = true
+			fullPath := filepath.Join(m.path, item.name)
+			if _, ok := m.selected[fullPath]; !ok {
+				allSelectableAreSelected = false
+				break
+			}
+		}
+	}
+
+	if !hasSelectableItems {
+		return
+	}
+
+	if allSelectableAreSelected {
+		for _, item := range m.items {
+			if !item.isExcluded {
+				fullPath := filepath.Join(m.path, item.name)
+				delete(m.selected, fullPath)
+			}
+		}
+	} else {
+		for _, item := range m.items {
+			if !item.isExcluded {
+				fullPath := filepath.Join(m.path, item.name)
+				m.selected[fullPath] = struct{}{}
+			}
+		}
+	}
 }

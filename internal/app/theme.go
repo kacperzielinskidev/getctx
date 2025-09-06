@@ -20,6 +20,24 @@ type TUIIcons struct {
 	Excluded  string
 }
 
+type TUIListElements struct {
+	CursorEmpty      string
+	SelectedPrefix   string
+	UnselectedPrefix string
+	DirectorySuffix  string
+}
+
+type TUITextElements struct {
+	HelpHeader   string
+	PathPrefix   string
+	StatusFooter string
+}
+
+type TUIElements struct {
+	List TUIListElements
+	Text TUITextElements
+}
+
 type TUIColors struct {
 	Green lipgloss.Color
 	Red   lipgloss.Color
@@ -41,6 +59,7 @@ type TUIStyles struct {
 }
 
 var Icons TUIIcons
+var Elements TUIElements
 var Colors TUIColors
 var Styles TUIStyles
 
@@ -56,6 +75,20 @@ func init() {
 		Checkmark: "✔",
 		Cursor:    "❯",
 		Excluded:  "🚫",
+	}
+
+	Elements = TUIElements{
+		List: TUIListElements{
+			CursorEmpty:      " ",
+			SelectedPrefix:   Icons.Checkmark + " ",
+			UnselectedPrefix: "  ",
+			DirectorySuffix:  "/",
+		},
+		Text: TUITextElements{
+			HelpHeader:   "Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n",
+			PathPrefix:   "Current path: ",
+			StatusFooter: "\nSelected %d items. Press 'q' to save and exit.",
+		},
 	}
 
 	Colors = TUIColors{

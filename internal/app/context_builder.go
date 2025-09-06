@@ -17,13 +17,13 @@ func HandleContextBuilder(m *Model, outputFilename string) error {
 		selectedPaths = append(selectedPaths, path)
 	}
 
-	return contextBuilder(selectedPaths, outputFilename)
+	return contextBuilder(selectedPaths, outputFilename, m.config)
 
 }
 
-func contextBuilder(selectedPaths []string, outputFilename string) error {
+func contextBuilder(selectedPaths []string, outputFilename string, config *Config) error {
 
-	acceptableFiles, err := discoverFiles(selectedPaths)
+	acceptableFiles, err := discoverFiles(selectedPaths, config.ExcludedNames)
 	if err != nil {
 		return fmt.Errorf("error discovering files: %w", err)
 	}

@@ -2,7 +2,8 @@ package main
 
 import (
 	"flag"
-	"log"
+	"fmt"
+	"os"
 
 	"getctx/internal/app"
 
@@ -19,16 +20,24 @@ func main() {
 		startPath = flag.Arg(0)
 	}
 
-	p := tea.NewProgram(app.NewModel(startPath))
+	config := app.NewConfig()
+	model, err := app.NewModel(startPath, config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error initializing model: %v\n", err)
+		os.Exit(1)
+	}
+	p := tea.NewProgram(model)
 
 	finalModel, err := p.Run()
 	if err != nil {
-		log.Fatalf("An error occurred while running the program: %v", err)
+		fmt.Fprintf(os.Stderr, "An error occurred while running the program: %v\n", err)
+		os.Exit(1)
 	}
 
 	if m, ok := finalModel.(*app.Model); ok {
 		if err := app.HandleContextBuilder(m, *outputFilename); err != nil {
-			log.Fatalf("A critical error occurred while creating the context file: %v", err)
+			fmt.Fprintf(os.Stderr, "A critical error occurred while creating the context file: %v\n", err)
+			os.Exit(1)
 		}
 	}
 }
