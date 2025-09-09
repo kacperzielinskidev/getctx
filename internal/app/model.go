@@ -84,20 +84,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case KeyEnter:
 				newPath := m.pathInput.Value()
-				// Rozszerzamy ścieżkę o ~ (home dir)
 				if strings.HasPrefix(newPath, "~") {
 					home, err := os.UserHomeDir()
 					if err == nil {
 						newPath = filepath.Join(home, newPath[1:])
 					}
 				}
-
 				absPath, err := filepath.Abs(newPath)
 				if err != nil {
 					m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
 					return m, nil
 				}
-
 				newItems, err := loadItems(absPath, m.config)
 				if err != nil {
 					m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
@@ -121,7 +118,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.pathInput, cmd = m.pathInput.Update(msg)
 		return m, cmd
 	}
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if len(m.items) == 0 && msg.String() != KeyQ && msg.String() != KeyCtrlC {
@@ -150,6 +146,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleCtrlHome()
 		case KeyCtrlEnd:
 			m.handleCtrlEnd()
+		case KeyP:
+			m.isInputMode = true
+			m.inputErrorMsg = ""
+			m.pathInput.SetValue(m.path + string(filepath.Separator))
+			return m, m.pathInput.Focus()
 		}
 	}
 	return m, nil
@@ -158,7 +159,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) View() string {
 	var s strings.Builder
 
-	// Renderuj pole do wprowadzania, jeśli jest aktywne.
 	if m.isInputMode {
 		s.WriteString("Enter path (Enter to confirm, Esc to cancel):\n")
 		s.WriteString(m.pathInput.View())
@@ -167,11 +167,9 @@ func (m *Model) View() string {
 		}
 		s.WriteString("\n\n")
 	} else {
-		// Renderuj główny nagłówek pomocy tylko, gdy nie jesteśmy w trybie wprowadzania.
 		s.WriteString(Elements.Text.HelpHeader)
 	}
 
-	// Zawsze renderuj listę plików i jej otoczenie.
 	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
 
 	for i, item := range m.items {
