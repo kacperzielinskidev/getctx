@@ -1,4 +1,3 @@
-// Plik: internal/app/context_builder.go
 package app
 
 import (

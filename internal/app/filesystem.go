@@ -1,4 +1,3 @@
-// Plik: internal/app/filesystem.go
 package app
 
 import (

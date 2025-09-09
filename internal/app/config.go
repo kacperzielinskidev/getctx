@@ -1,6 +1,5 @@
 package app
 
-// Config holds the application's configuration.
 type Config struct {
 	ExcludedNames map[string]struct{}
 }
@@ -44,7 +43,6 @@ func NewConfig() *Config {
 	}
 }
 
-// IsExcluded checks if a given name is in the exclusion list.
 func (c *Config) IsExcluded(name string) bool {
 	_, found := c.ExcludedNames[name]
 	return found
