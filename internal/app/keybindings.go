@@ -9,4 +9,6 @@ const (
 	KeyBackspace = "backspace"
 	KeySpace     = " "
 	KeyCtrlA     = "ctrl+a"
+	KeyCtrlHome  = "ctrl+home"
+	KeyCtrlEnd   = "ctrl+end"
 )

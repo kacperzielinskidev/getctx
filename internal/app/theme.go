@@ -85,7 +85,7 @@ func init() {
 			DirectorySuffix:  "/",
 		},
 		Text: TUITextElements{
-			HelpHeader:   "Select files for context (space: toggle, enter: open, backspace: up, q: save & quit)\n",
+			HelpHeader:   "Select files (space: toggle, enter: open, backspace: up, ctrl+home: top, ctrl+end: bottom, q: save)\n",
 			PathPrefix:   "Current path: ",
 			StatusFooter: "\nSelected %d items. Press 'q' to save and exit.",
 		},

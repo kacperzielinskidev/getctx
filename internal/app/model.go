@@ -89,6 +89,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.handleSpace()
 		case KeyCtrlA:
 			m.handleCtrlA()
+		case KeyCtrlHome:
+			m.handleCtrlHome()
+		case KeyCtrlEnd:
+			m.handleCtrlEnd()
 		}
 	}
 	return m, nil
@@ -242,5 +246,17 @@ func (m *Model) handleCtrlA() {
 				m.selected[fullPath] = struct{}{}
 			}
 		}
+	}
+}
+
+func (m *Model) handleCtrlHome() {
+	if len(m.items) > 0 {
+		m.cursor = 0
+	}
+}
+
+func (m *Model) handleCtrlEnd() {
+	if len(m.items) > 0 {
+		m.cursor = len(m.items) - 1
 	}
 }
