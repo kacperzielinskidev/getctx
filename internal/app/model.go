@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -23,13 +22,15 @@ type Model struct {
 	cursor        int
 	selected      map[string]struct{}
 	config        *Config
+	fsys          FileSystem
 	pathInput     textinput.Model
 	isInputMode   bool
 	inputErrorMsg string
 }
 
-func loadItems(path string, config *Config) ([]item, error) {
-	dirEntries, err := os.ReadDir(path)
+func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
+	// Zmieniono os.ReadDir na fs.ReadDir
+	dirEntries, err := fsys.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +46,13 @@ func loadItems(path string, config *Config) ([]item, error) {
 	return items, nil
 }
 
-func NewModel(startPath string, config *Config) (*Model, error) {
-	path, err := filepath.Abs(startPath)
+func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error) {
+	path, err := fsys.Abs(startPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get absolute path for '%s': %w", startPath, err)
 	}
 
-	items, err := loadItems(path, config)
+	items, err := loadItems(fsys, path, config)
 	if err != nil {
 		return nil, fmt.Errorf("could not read directory '%s': %w", path, err)
 	}
@@ -66,6 +67,7 @@ func NewModel(startPath string, config *Config) (*Model, error) {
 		items:       items,
 		selected:    make(map[string]struct{}),
 		config:      config,
+		fsys:        fsys,
 		pathInput:   ti,
 		isInputMode: false,
 	}, nil
@@ -85,17 +87,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case KeyEnter:
 				newPath := m.pathInput.Value()
 				if strings.HasPrefix(newPath, "~") {
-					home, err := os.UserHomeDir()
+					// Zmieniono os.UserHomeDir na m.fs.UserHomeDir
+					home, err := m.fsys.UserHomeDir()
 					if err == nil {
 						newPath = filepath.Join(home, newPath[1:])
 					}
 				}
-				absPath, err := filepath.Abs(newPath)
+				// Zmieniono filepath.Abs na m.fs.Abs
+				absPath, err := m.fsys.Abs(newPath)
 				if err != nil {
 					m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
 					return m, nil
 				}
-				newItems, err := loadItems(absPath, m.config)
+				newItems, err := loadItems(m.fsys, absPath, m.config)
 				if err != nil {
 					m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
 				} else {
@@ -243,7 +247,7 @@ func (m *Model) handleEnter() {
 	currentItem := m.items[m.cursor]
 	if currentItem.isDir && !currentItem.isExcluded {
 		newPath := filepath.Join(m.path, currentItem.name)
-		newItems, err := loadItems(newPath, m.config)
+		newItems, err := loadItems(m.fsys, newPath, m.config)
 		if err != nil {
 			log.Printf("Error reading directory %s: %v", newPath, err)
 			return
@@ -257,7 +261,7 @@ func (m *Model) handleEnter() {
 func (m *Model) handleBackspace() {
 	parentPath := filepath.Dir(m.path)
 	if parentPath != m.path {
-		newItems, err := loadItems(parentPath, m.config)
+		newItems, err := loadItems(m.fsys, parentPath, m.config)
 		if err != nil {
 			log.Printf("Error reading directory %s: %v", parentPath, err)
 			return

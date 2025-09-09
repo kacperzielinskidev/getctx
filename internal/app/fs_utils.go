@@ -5,12 +5,11 @@ import (
 	"io"
 	"io/fs"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 )
 
-func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string, []string, error) {
+func discoverFiles(fsys FileSystem, paths []string, excludedNames map[string]struct{}) ([]string, []string, error) {
 	var discoveredPaths []string
 	var warnings []string
 
@@ -19,14 +18,15 @@ func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string,
 			continue
 		}
 
-		info, err := os.Stat(path)
+		info, err := fsys.Stat(path)
 		if err != nil {
 			warnings = append(warnings, fmt.Sprintf("Could not stat path %s: %v", path, err))
 			continue
 		}
 
 		if info.IsDir() {
-			err := filepath.WalkDir(path, func(subPath string, d fs.DirEntry, err error) error {
+			// Zmieniono filepath.WalkDir na fsys.WalkDir.
+			err := fsys.WalkDir(path, func(subPath string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
 				}
@@ -54,8 +54,8 @@ func discoverFiles(paths []string, excludedNames map[string]struct{}) ([]string,
 	return discoveredPaths, warnings, nil
 }
 
-func isTextFile(path string) (bool, error) {
-	file, err := os.Open(path)
+func isTextFile(fsys FileSystem, path string) (bool, error) {
+	file, err := fsys.Open(path)
 	if err != nil {
 		return false, err
 	}

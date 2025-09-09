@@ -1,3 +1,4 @@
+// Plik: cmd/getctx/main.go
 package main
 
 import (
@@ -11,7 +12,6 @@ import (
 )
 
 func main() {
-	// TODO: Move from the main.go
 	outputFilename := flag.String("o", "context.txt", "The name of the output file")
 	flag.Parse()
 
@@ -21,7 +21,9 @@ func main() {
 	}
 
 	config := app.NewConfig()
-	model, err := app.NewModel(startPath, config)
+	fsys := app.NewOSFileSystem()
+
+	model, err := app.NewModel(startPath, config, fsys)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error initializing model: %v\n", err)
 		os.Exit(1)
@@ -35,6 +37,7 @@ func main() {
 	}
 
 	if m, ok := finalModel.(*app.Model); ok {
+		// HandleContextBuilder uzyska dostęp do FileSystem poprzez model 'm'.
 		if err := app.HandleContextBuilder(m, *outputFilename); err != nil {
 			fmt.Fprintf(os.Stderr, "A critical error occurred while creating the context file: %v\n", err)
 			os.Exit(1)
