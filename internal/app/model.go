@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -17,11 +18,14 @@ type item struct {
 }
 
 type Model struct {
-	path     string
-	items    []item
-	cursor   int
-	selected map[string]struct{}
-	config   *Config
+	path          string
+	items         []item
+	cursor        int
+	selected      map[string]struct{}
+	config        *Config
+	pathInput     textinput.Model
+	isInputMode   bool
+	inputErrorMsg string
 }
 
 func loadItems(path string, config *Config) ([]item, error) {
@@ -52,11 +56,18 @@ func NewModel(startPath string, config *Config) (*Model, error) {
 		return nil, fmt.Errorf("could not read directory '%s': %w", path, err)
 	}
 
+	ti := textinput.New()
+	ti.Placeholder = "/home/user/project..."
+	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
+	ti.Focus()
+
 	return &Model{
-		path:     path,
-		items:    items,
-		selected: make(map[string]struct{}),
-		config:   config,
+		path:        path,
+		items:       items,
+		selected:    make(map[string]struct{}),
+		config:      config,
+		pathInput:   ti,
+		isInputMode: false,
 	}, nil
 }
 
@@ -65,6 +76,52 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
+	if m.isInputMode {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			switch msg.String() {
+			case KeyEnter:
+				newPath := m.pathInput.Value()
+				// Rozszerzamy ścieżkę o ~ (home dir)
+				if strings.HasPrefix(newPath, "~") {
+					home, err := os.UserHomeDir()
+					if err == nil {
+						newPath = filepath.Join(home, newPath[1:])
+					}
+				}
+
+				absPath, err := filepath.Abs(newPath)
+				if err != nil {
+					m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
+					return m, nil
+				}
+
+				newItems, err := loadItems(absPath, m.config)
+				if err != nil {
+					m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
+				} else {
+					m.path = absPath
+					m.items = newItems
+					m.cursor = 0
+					m.isInputMode = false
+					m.inputErrorMsg = ""
+					m.pathInput.Reset()
+				}
+				return m, nil
+
+			case KeyEscape, KeyCtrlC:
+				m.isInputMode = false
+				m.inputErrorMsg = ""
+				m.pathInput.Reset()
+				return m, nil
+			}
+		}
+		m.pathInput, cmd = m.pathInput.Update(msg)
+		return m, cmd
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if len(m.items) == 0 && msg.String() != KeyQ && msg.String() != KeyCtrlC {
@@ -100,7 +157,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *Model) View() string {
 	var s strings.Builder
-	s.WriteString(Elements.Text.HelpHeader)
+
+	// Renderuj pole do wprowadzania, jeśli jest aktywne.
+	if m.isInputMode {
+		s.WriteString("Enter path (Enter to confirm, Esc to cancel):\n")
+		s.WriteString(m.pathInput.View())
+		if m.inputErrorMsg != "" {
+			s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
+		}
+		s.WriteString("\n\n")
+	} else {
+		// Renderuj główny nagłówek pomocy tylko, gdy nie jesteśmy w trybie wprowadzania.
+		s.WriteString(Elements.Text.HelpHeader)
+	}
+
+	// Zawsze renderuj listę plików i jej otoczenie.
 	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
 
 	for i, item := range m.items {

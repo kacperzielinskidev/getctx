@@ -51,6 +51,7 @@ type TUIListStyles struct {
 
 type TUILogStyles struct {
 	Skipped lipgloss.Style
+	Error   lipgloss.Style
 }
 
 type TUIStyles struct {
@@ -85,7 +86,7 @@ func init() {
 			DirectorySuffix:  "/",
 		},
 		Text: TUITextElements{
-			HelpHeader:   "Select files (space: toggle, enter: open, backspace: up, ctrl+home: top, ctrl+end: bottom, q: save)\n",
+			HelpHeader:   "Select files (space: toggle, ctrl+home: top, ctrl+end: bottom, ctrl+shift+f: find path, q: save)\n",
 			PathPrefix:   "Current path: ",
 			StatusFooter: "\nSelected %d items. Press 'q' to save and exit.",
 		},
@@ -104,6 +105,7 @@ func init() {
 		},
 		Log: TUILogStyles{
 			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),
+			Error:   lipgloss.NewStyle().Foreground(Colors.Red).Bold(true),
 		},
 	}
 }
