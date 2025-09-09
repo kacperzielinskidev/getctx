@@ -21,9 +21,9 @@ func main() {
 	}
 
 	config := app.NewConfig()
-	fsys := app.NewOSFileSystem()
+	fs := app.NewOSFileSystem()
 
-	model, err := app.NewModel(startPath, config, fsys)
+	model, err := app.NewModel(startPath, config, fs)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error initializing model: %v\n", err)
 		os.Exit(1)
@@ -37,8 +37,7 @@ func main() {
 	}
 
 	if m, ok := finalModel.(*app.Model); ok {
-		// HandleContextBuilder uzyska dostęp do FileSystem poprzez model 'm'.
-		if err := app.HandleContextBuilder(m, *outputFilename); err != nil {
+		if err := app.BuildContext(m, *outputFilename); err != nil {
 			fmt.Fprintf(os.Stderr, "A critical error occurred while creating the context file: %v\n", err)
 			os.Exit(1)
 		}
