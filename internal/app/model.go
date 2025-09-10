@@ -1,3 +1,4 @@
+// Plik: internal/app/model.go
 package app
 
 import (
@@ -65,14 +66,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	return m.updateNormalMode(msg)
 }
-
-func (m *Model) View() string {
-	if m.isInputMode {
-		return m.viewInputMode()
-	}
-	return m.viewNormalMode()
-}
-
 func (m *Model) updateInputMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -92,15 +85,8 @@ func (m *Model) updateInputMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m *Model) viewInputMode() string {
-	var s strings.Builder
-	s.WriteString("Enter path (Enter to confirm, Esc to cancel):\n")
-	s.WriteString(m.pathInput.View())
-	if m.inputErrorMsg != "" {
-		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
-	}
-	s.WriteString("\n\n")
-	return s.String()
+func isQuitKey(key string) bool {
+	return key == KeyQ || key == KeyCtrlC
 }
 
 func (m *Model) updateNormalMode(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -137,12 +123,32 @@ func (m *Model) updateNormalMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) viewNormalMode() string {
+func (m *Model) View() string {
 	var s strings.Builder
-	s.WriteString(Elements.Text.HelpHeader)
+
+	if m.isInputMode {
+		s.WriteString(m.renderPathInput())
+	} else {
+		s.WriteString(Elements.Text.HelpHeader)
+	}
+
 	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+
 	s.WriteString(m.renderFileList())
+
 	s.WriteString(fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected)))
+
+	return s.String()
+}
+
+func (m *Model) renderPathInput() string {
+	var s strings.Builder
+	s.WriteString("Enter path (Enter to confirm, Esc to cancel):\n")
+	s.WriteString(m.pathInput.View())
+	if m.inputErrorMsg != "" {
+		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
+	}
+	s.WriteString("\n\n")
 	return s.String()
 }
 
@@ -154,6 +160,7 @@ func (m *Model) renderFileList() string {
 	}
 	return s.String()
 }
+
 func (m *Model) renderListItem(index int, item item) string {
 	cursor := Elements.List.CursorEmpty
 	if m.cursor == index {
@@ -197,10 +204,6 @@ func (m *Model) renderListItem(index int, item item) string {
 	return line
 }
 
-func isQuitKey(key string) bool {
-	return key == KeyQ || key == KeyCtrlC
-}
-
 func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
 	dirEntries, err := fsys.ReadDir(path)
 	if err != nil {
@@ -226,7 +229,6 @@ func (m *Model) changeDirectory(newPath string) {
 	m.items = newItems
 	m.cursor = 0
 }
-
 func (m *Model) handleQuit(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if msg.String() == KeyCtrlC {
 		m.selected = make(map[string]struct{})
