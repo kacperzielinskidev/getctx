@@ -287,13 +287,6 @@ func (m *Model) changeDirectory(newPath string) {
 	m.viewport.GotoTop()
 }
 
-// func (m *Model) handleQuit(msg tea.KeyMsg) tea.Cmd {
-// 	if msg.String() == KeyCtrlC {
-// 		m.selected = make(map[string]struct{})
-// 	}
-// 	return tea.Quit
-// }
-
 func (m *Model) handleConfirmAndExit() tea.Cmd {
 	return tea.Quit
 }
