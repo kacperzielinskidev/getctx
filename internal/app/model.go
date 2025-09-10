@@ -46,7 +46,7 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 	}
 
 	ti := textinput.New()
-	ti.Placeholder = "/home/user/project..."
+
 	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
 	ti.Focus()
 
@@ -183,8 +183,8 @@ func (m *Model) renderPathInput() string {
 	var s strings.Builder
 
 	s.WriteString(Elements.Text.InputHeader)
-
 	s.WriteString(m.pathInput.View())
+
 	if m.inputErrorMsg != "" {
 		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
 	}

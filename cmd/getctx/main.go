@@ -2,50 +2,26 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	"getctx/internal/app"
-
-	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
-
 	logFile := setupLogging()
 	defer logFile.Close()
 
-	outputFilename := flag.String("o", "context.txt", "The name of the output file")
-	flag.Parse()
-
-	startPath := "."
-	if flag.NArg() > 0 {
-		startPath = flag.Arg(0)
-	}
-
-	config := app.NewConfig()
-	fs := app.NewOSFileSystem()
-
-	model, err := app.NewModel(startPath, config, fs)
+	application, err := app.NewApp()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error initializing model: %v\n", err)
-		os.Exit(1)
-	}
-	p := tea.NewProgram(model, tea.WithAltScreen())
-
-	finalModel, err := p.Run()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "An error occurred while running the program: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Initialization error: %v\n", err)
 		os.Exit(1)
 	}
 
-	if m, ok := finalModel.(*app.Model); ok {
-		if err := app.BuildContext(m, *outputFilename); err != nil {
-			fmt.Fprintf(os.Stderr, "A critical error occurred while creating the context file: %v\n", err)
-			os.Exit(1)
-		}
+	if err := application.Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Runtime error: %v\n", err)
+		os.Exit(1)
 	}
 }
 
