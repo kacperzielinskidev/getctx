@@ -85,22 +85,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-
-		var header strings.Builder
-		if m.isInputMode {
-			header.WriteString(m.renderPathInput())
-		} else {
-			header.WriteString(Elements.Text.HelpHeader)
-		}
-		header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
-
-		footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
-
-		headerHeight := lipgloss.Height(header.String())
-		footerHeight := lipgloss.Height(footer)
-
-		m.viewport.Width = m.width
-		m.viewport.Height = m.height - headerHeight - footerHeight
 	}
 
 	if m.isInputMode {
@@ -109,6 +93,22 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.updateNormalMode(msg)
 	}
 	cmds = append(cmds, cmd)
+
+	var header strings.Builder
+	if m.isInputMode {
+		header.WriteString(m.renderPathInput())
+	} else {
+		header.WriteString(Elements.Text.HelpHeader)
+	}
+	header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+
+	footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
+
+	headerHeight := lipgloss.Height(header.String())
+	footerHeight := lipgloss.Height(footer)
+
+	m.viewport.Width = m.width
+	m.viewport.Height = m.height - headerHeight - footerHeight
 
 	m.viewport.SetContent(m.renderFileList())
 	m.ensureCursorVisible()
