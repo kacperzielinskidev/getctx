@@ -468,7 +468,3 @@ func (m *Model) ensureCursorVisible() {
 		m.viewport.SetYOffset(m.cursor - m.viewport.Height + 1)
 	}
 }
-
-func isQuitKey(key string) bool {
-	return key == KeyQ || key == KeyCtrlC
-}
