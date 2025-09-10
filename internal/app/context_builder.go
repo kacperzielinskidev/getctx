@@ -1,45 +1,62 @@
-// Plik: internal/app/context_builder.go
 package app
 
 import (
 	"fmt"
+	"io"
 	"sort"
 )
 
-// BuildContext tworzy plik kontekstowy na podstawie zaznaczonych elementów w modelu.
-// Funkcja ta jest jedynym publicznym punktem wejścia dla logiki budowania kontekstu.
 func BuildContext(m *Model, outputFilename string) error {
-	// Krok 1: Sprawdzenie, czy cokolwiek zostało zaznaczone.
 	if len(m.selected) == 0 {
 		fmt.Printf("%s No items selected. Exiting.\n", Icons.Error)
 		return nil
 	}
 
-	// Krok 2: Wyodrębnienie ścieżek z mapy w modelu.
-	selectedPaths := make([]string, 0, len(m.selected))
-	for path := range m.selected {
-		selectedPaths = append(selectedPaths, path)
+	selectedPaths := extractSelectedPaths(m)
+
+	processableFiles, err := findProcessableFiles(m.fsys, selectedPaths, m.config)
+	if err != nil {
+		return err
 	}
 
-	// Krok 3: Odkrycie wszystkich plików w podanych ścieżkach.
-	// Używamy FileSystem i Config bezpośrednio z modelu.
-	fs := m.fsys
-	config := m.config
-	acceptableFiles, warnings, err := discoverFiles(fs, selectedPaths, config.ExcludedNames)
-	if err != nil {
-		return fmt.Errorf("error discovering files: %w", err)
+	textFiles := filterTextFiles(m.fsys, processableFiles)
+
+	if !handleNoTextFilesFound(len(processableFiles), len(textFiles)) {
+		return nil
 	}
+
+	return writeContextFile(m.fsys, outputFilename, textFiles)
+}
+
+func extractSelectedPaths(m *Model) []string {
+	paths := make([]string, 0, len(m.selected))
+	for path := range m.selected {
+		paths = append(paths, path)
+	}
+	return paths
+}
+
+func findProcessableFiles(fsys FileSystem, paths []string, config *Config) ([]string, error) {
+	files, warnings, err := discoverFiles(fsys, paths, config.ExcludedNames)
+	if err != nil {
+		return nil, fmt.Errorf("error discovering files: %w", err)
+
+	}
+
 	if len(warnings) > 0 {
 		fmt.Printf("%s Some paths were skipped due to errors:\n", Icons.Warning)
 		for _, warn := range warnings {
 			fmt.Printf("   - %s\n", warn)
 		}
 	}
+	return files, nil
 
-	// Krok 4: Filtrowanie, aby zostawić tylko pliki tekstowe.
+}
+
+func filterTextFiles(fsys FileSystem, files []string) []string {
 	var textFiles []string
-	for _, path := range acceptableFiles {
-		isText, err := isTextFile(fs, path)
+	for _, path := range files {
+		isText, err := isTextFile(fsys, path)
 		if err != nil {
 			fmt.Printf("%s Warning: Could not check file type for %s: %v\n", Icons.Warning, path, err)
 			continue
@@ -48,56 +65,69 @@ func BuildContext(m *Model, outputFilename string) error {
 			textFiles = append(textFiles, path)
 		}
 	}
+	return textFiles
+}
 
-	skippedFileCount := len(acceptableFiles) - len(textFiles)
-
-	// Krok 5: Obsługa przypadku, gdy nie znaleziono żadnych plików tekstowych.
-	if len(textFiles) == 0 {
-		message := fmt.Sprintf("\n%s No text files found to include.", Icons.Info)
-		if skippedFileCount > 0 {
-			message += fmt.Sprintf(" %d file(s) were skipped (non-text or unreadable).", skippedFileCount)
-		}
-		message += " Output file was not created."
-		fmt.Println(message)
-		return nil
+func handleNoTextFilesFound(totalFiles, textFiles int) bool {
+	if textFiles > 0 {
+		return true
 	}
 
-	// Krok 6: Zapisywanie zawartości do pliku wyjściowego.
-	fmt.Printf("%s Building context file: %s\n", Icons.Building, outputFilename)
+	skippedFileCount := totalFiles - textFiles
+	message := fmt.Sprintf("\n%s No text files found to include.", Icons.Info)
 	if skippedFileCount > 0 {
-		fmt.Printf("   %s Skipped %d non-text or unreadable file(s).\n", Icons.Info, skippedFileCount)
+		message += fmt.Sprintf(" %d file(s) were skipped (non-text or unreadable).", skippedFileCount)
 	}
+	message += " Output file was not created."
+	fmt.Println(message)
 
-	sort.Strings(textFiles)
-	for _, path := range textFiles {
+	return false
+}
+
+func writeContextFile(fsys FileSystem, filename string, files []string) error {
+	fmt.Printf("%s Building context file: %s\n", Icons.Building, filename)
+
+	sort.Strings(files)
+	for _, path := range files {
 		fmt.Printf("   %s Adding content from: %s\n", Icons.Cursor, path)
 	}
 
-	outputFile, err := fs.Create(outputFilename)
+	outputFile, err := fsys.Create(filename)
 	if err != nil {
-		return fmt.Errorf("failed to create output file %s: %w", outputFilename, err)
+		return fmt.Errorf("failed to create output file %s: %w", filename, err)
 	}
 	defer outputFile.Close()
 
-	for _, path := range textFiles {
-		content, err := fs.ReadFile(path)
-		if err != nil {
-			fmt.Printf("%s Warning: Failed to read file %s: %v\n", Icons.Warning, path, err)
-			continue
+	for _, path := range files {
+		if err := appendFileToContext(outputFile, fsys, path); err != nil {
+			fmt.Printf("%s Warning: Failed to append file %s: %v\n", Icons.Warning, path, err)
 		}
-		header := fmt.Sprintf("--- START OF FILE: %s ---\n", path)
-		footer := fmt.Sprintf("\n--- END OF FILE: %s ---\n\n", path)
-		if _, err := outputFile.Write([]byte(header)); err != nil {
-			return fmt.Errorf("error writing header for file %s: %w", path, err)
-		}
-		if _, err := outputFile.Write(content); err != nil {
-			return fmt.Errorf("error writing content for file %s: %w", path, err)
-		}
-		if _, err := outputFile.Write([]byte(footer)); err != nil {
-			return fmt.Errorf("error writing footer for file %s: %w", path, err)
+	}
+	fmt.Printf("%s Done! All content has been combined into %s\n", Icons.Done, filename)
+	return nil
+}
+
+func appendFileToContext(writer io.Writer, fsys FileSystem, path string) error {
+	content, err := fsys.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("could not read file %s: %w", path, err)
+	}
+
+	chunks := []struct {
+		data        []byte
+		description string
+	}{
+		{fmt.Appendf(nil, "--- START OF FILE: %s ---\n", path), "header"},
+		{content, "content"},
+		{fmt.Appendf(nil, "\n--- END OF FILE: %s ---\n\n", path), "footer"},
+	}
+
+	for _, chunk := range chunks {
+		if _, err := writer.Write(chunk.data); err != nil {
+			return fmt.Errorf("error writing %s for file %s: %w", chunk.description, path, err)
 		}
 	}
 
-	fmt.Printf("%s Done! All content has been combined into %s\n", Icons.Done, outputFilename)
 	return nil
+
 }

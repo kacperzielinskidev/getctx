@@ -25,7 +25,6 @@ func discoverFiles(fsys FileSystem, paths []string, excludedNames map[string]str
 		}
 
 		if info.IsDir() {
-			// Zmieniono filepath.WalkDir na fsys.WalkDir.
 			err := fsys.WalkDir(path, func(subPath string, d fs.DirEntry, err error) error {
 				if err != nil {
 					return err
