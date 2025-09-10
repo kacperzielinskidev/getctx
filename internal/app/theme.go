@@ -112,9 +112,9 @@ func init() {
 
 	texts := TUITexts{
 		HelpHeaderBase:  "Select files ",
-		HelpHeaderHint:  "(space: Select File, ctrl+home: Go to Top, ctrl+end: Go to Bottom, ctrl+p: Find Path, q: Save)",
+		HelpHeaderHint:  "(SPACE: Select File, CTRL+HOME: Go to Top, CTRL+END: Go to Bottom, CTRL+P: Find Path, Q: Save)",
 		InputHeaderBase: "Enter path ",
-		InputHeaderHint: "(enter: Confirm, esc: Cancel, ctrl+w: Remove whole line)",
+		InputHeaderHint: "(ENTER: Confirm, ESCAPE: Cancel, CTRL+W: Remove whole line)",
 		PathPrefix:      "Current path: ",
 		StatusFooter:    "\nSelected %d items. Press 'q' to save and exit.",
 	}

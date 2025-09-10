@@ -8,65 +8,90 @@ The main use case is to quickly aggregate source code context from a project, wh
 
 ## 2. Project Architecture
 
-The project is structured according to standard Go application layout, with a clear **Separation of Concerns**:
+The project follows modern Go application design, emphasizing a clear **Separation of Concerns**. The core logic is managed by a central `App` orchestrator, with distinct packages for the TUI, business logic, and shared utilities.
 
-- **`cmd/getctx/main.go`**: **Entrypoint**. It is responsible for:
+- **`cmd/getctx/main.go`**: **Minimal Entrypoint**. Its sole responsibilities are:
 
-  - Parsing command-line flags (e.g., `-o` for the output file).
-  - Initializing and running the TUI.
-  - Passing the results from the TUI to the context-building logic.
-  - Handling top-level errors.
+  - Initializing the global, structured logger.
+  - Creating and running the main `App` instance from the `internal/app` package.
+  - Handling and logging fatal errors at the highest level.
+
+- **`internal/app/app.go`**: **Application Orchestrator**.
+
+  - Contains the central `App` struct that encapsulates the application's lifecycle and dependencies.
+  - **`NewApp()`**: Responsible for parsing command-line flags (e.g., `-o`).
+  - **`Run()`**: Executes the main application flow: starts the TUI, waits for it to exit, and then passes the final state to the context-building logic.
+
+- **`internal/logger/logger.go`**: **Global Structured Logger**.
+
+  - A dedicated, site-wide package for logging.
+  - Provides a global singleton instance, accessible via functions like `logger.Info()`, `logger.Error()`.
+  - Logs messages in a structured **JSON format** to a `debug.log` file.
+  - Includes log levels (DEBUG, INFO, WARN, ERROR) and a `name` field to identify the context of the log entry.
 
 - **`internal/app/model.go`**: **Terminal User Interface (TUI) Core**.
 
-  - All interactive logic resides here.
-  - Built using the **`bubbletea`** library and the **Model-View-Update** architectural pattern.
-  - **Model (`Model` struct):** Holds the entire state of the interface: the current path, the list of files/folders (including their excluded status), the cursor position, and a map of selected items.
-  - **View (`View()` method):** Renders the model's state to the terminal screen, using styles from the `lipgloss` library.
-  - **Update (`Update()` method):** Handles all user input (key presses) and modifies the model's state accordingly.
+  - All interactive logic resides here, built using the **`bubbletea`** library and the Model-View-Update pattern.
+  - **`Model` struct**: Holds the entire TUI state, including the cursor, selected items, and error messages.
+  - **`View()` method**: Renders the UI based on the model's state.
+  - **`Update()` method**: A key component that handles all user input and state changes. It now performs **dynamic layout calculation on every frame**, ensuring the UI remains responsive and correctly sized even when components (like error messages) appear or disappear.
+  - Integrates a **`viewport`** component to smoothly handle scrolling through long file lists.
 
-- **`internal/app/context_builder.go`**: **Business Logic**.
+- **`internal/app/build_context.go`**: **Business Logic**.
 
   - Contains the "brain" of the application that runs after the TUI exits.
-  - Responsible for processing the list of selected paths, filtering out non-text files, and building the final `context.txt` file.
-  - Prints a summary log to the console about which files are being added and how many were skipped.
+  - Responsible for processing the list of selected paths from the `Model`, filtering non-text files, and building the final `context.txt`.
 
-- **`internal/app/fs_utils.go`**: **File System Utilities**.
+- **`internal/app/fs_utils.go`** & **`filesystem.go`**: **File System Abstraction**.
 
-  - A collection of general-purpose helper functions for file and folder operations.
-  - **`discoverFiles`**: Recursively scans the given paths, respecting the exclusion list, and returns a list of all found, non-excluded file paths.
-  - **`isTextFile`**: Detects if a given file is a text file using a MIME type-based heuristic.
+  - Provides file and folder helper functions and an `FileSystem` interface for improved testability.
+  - **`discoverFiles`**: Recursively finds all eligible files.
+  - **`isTextFile`**: Detects if a file is text-based.
 
 - **`internal/app/theme.go`**: **Theme & Style Definitions**.
 
-  - A central place for managing the application's look and feel.
-  - Defines icons (emoji), colors, and complex styles (`lipgloss.Style`) used in both the TUI and the logs.
-  - Styles are organized into nested structs for better readability and scalability.
+  - Centralizes all visual elements (icons, colors, `lipgloss` styles).
+  - Refactored to separate raw text content (e.g., help messages) from the styling logic, improving maintainability.
 
 - **`internal/app/keybindings.go`**: **Keybinding Definitions**.
 
-  - A central place that defines all keyboard shortcuts used in the application as constants (`const`). Eliminates "magic strings" in the TUI logic.
+  - Defines all keyboard shortcuts as constants to avoid "magic strings".
 
 - **`internal/app/config.go`**: **Application Configuration**.
-  - Stores application-wide configuration, such as the **exclusion list** (`ExcludedNames`) of files and folders to be ignored.
+  - Stores application-wide configuration, such as the list of excluded file and folder names.
 
 ## 3. Key Features and Logic
 
-- **Navigation:** The user navigates the filesystem using the up/down arrow keys. `Enter` opens a directory, and `Backspace` goes to the parent directory.
-- **Intelligent File Exclusion (Blacklist):** The tool maintains a configurable list of file and folder names (e.g., `.git`, `node_modules`, `bin`) to ignore.
-  - **Visual Feedback:** Ignored items are displayed in a dimmed, greyed-out style in the TUI and are marked with a `🚫` icon.
-  - **Interaction Disabled:** The user cannot select or enter excluded directories or files.
-  - **Performance:** Excluded directories are skipped entirely during recursive scans for maximum efficiency.
+- **File System Navigation:** The user navigates the filesystem with arrow keys (`handleMoveCursorUp`/`Down`). `Enter` (`handleEnterDirectory`) opens a directory, and `Backspace` (`handleNavigateToParent`) goes to the parent directory.
+
+- **Direct Path Input Mode:**
+
+  - **Activation:** Pressing `CTRL+P` (`handleEnterPathInputMode`) activates a text input field.
+  - **Functionality:** Allows the user to directly type or paste an absolute or relative path. Supports `~` as a shortcut for the user's home directory.
+  - **User Guidance:** Clear, color-coded on-screen hints (`(enter: Confirm, esc: Cancel)`) guide the user.
+  - **Confirmation & Cancellation:** `Enter` (`handleConfirmPathChange`) attempts to navigate to the path. `Esc` or `CTRL+C` (`handleCancelPathChange`) exits the input mode without changes.
+  - **Error Handling:** If an invalid path is entered, a non-disruptive error message appears directly below the input field without breaking the UI layout.
+
+- **Intelligent File Exclusion (Blacklist):** The tool maintains a configurable list of names to ignore (e.g., `.git`, `node_modules`). Ignored items are visually dimmed and cannot be interacted with.
+
 - **Selection:**
-  - `Spacebar`: Toggles the selection for an individual (non-excluded) file or folder under the cursor.
-  - `CTRL+A`: Toggles the selection for all non-excluded items in the current view.
-- **Non-Text File Filtering:** As a final safety measure, the tool inspects the content of all selected files and includes only those identified as text-based. The user is informed with a summary of how many files were skipped for this reason.
+
+  - `Spacebar` (`handleSelectFile`): Toggles selection for a single item.
+  - `CTRL+A` (`handleSelectAllFiles`): Toggles selection for all visible items.
+
+- **Dynamic & Responsive UI:** The TUI is fully responsive. The `viewport` ensures that lists of any length are scrollable, and the appearance of error messages correctly resizes the view without breaking the UI layout.
+
+- **Structured Logging:** All significant application events, warnings, and errors are logged to `debug.log` in a machine-readable JSON format for easier debugging.
+
 - **Program Exit:**
-  - `q`: Exits the interface and **initiates the build process** for the `context.txt` file from the selected items.
-  - `CTRL+C`: **Cancels the operation**. Exits the program without saving the file.
-- **Styling:** The application makes extensive use of the `lipgloss` library for styling (colors, bolding) in both the interactive TUI and the final log output, ensuring a consistent and modern look.
+
+  - `q` (`handleConfirmAndExit`): Exits and initiates the build process.
+  - `CTRL+C` (`handleCancelAndExit`): Clears all selections and exits without saving.
+
+- **Enhanced Styling:** The application uses `lipgloss` for a modern look. Keybinding hints in the help text are color-coded to improve usability.
 
 ## 4. External Dependencies
 
-- `github.com/charmbracelet/bubbletea`: The foundation of the TUI.
-- `github.com/charmbracelet/lipgloss`: For styling text in the terminal.
+- `github.com/charmbracelet/bubbletea`: The TUI framework.
+- `github.com/charmbracelet/bubbles/viewport`: The component for scrollable views.
+- `github.com/charmbracelet/lipgloss`: The library for terminal styling.
