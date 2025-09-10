@@ -94,4 +94,5 @@ The project follows modern Go application design, emphasizing a clear **Separati
 
 - `github.com/charmbracelet/bubbletea`: The TUI framework.
 - `github.com/charmbracelet/bubbles/viewport`: The component for scrollable views.
+- `github.com/charmbracelet/bubbles/textinput`: The component that provides the text input field for the 'Direct Path Input' feature.
 - `github.com/charmbracelet/lipgloss`: The library for terminal styling.
