@@ -4,6 +4,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"getctx/internal/app"
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+
+	logFile := setupLogging()
+	defer logFile.Close()
+
 	outputFilename := flag.String("o", "context.txt", "The name of the output file")
 	flag.Parse()
 
@@ -28,7 +33,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error initializing model: %v\n", err)
 		os.Exit(1)
 	}
-	p := tea.NewProgram(model)
+	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	finalModel, err := p.Run()
 	if err != nil {
@@ -42,4 +47,14 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+func setupLogging() *os.File {
+	f, err := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	log.SetOutput(f)
+	log.Println("--- Application Start ---")
+	return f
 }

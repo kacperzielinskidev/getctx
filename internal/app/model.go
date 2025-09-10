@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
+// ... (structy, NewModel, Init, Update i większość funkcji bez zmian) ...
 type item struct {
 	name       string
 	isDir      bool
@@ -27,6 +30,9 @@ type Model struct {
 	pathInput     textinput.Model
 	isInputMode   bool
 	inputErrorMsg string
+	viewport      viewport.Model
+	width         int
+	height        int
 }
 
 func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error) {
@@ -45,7 +51,9 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
 	ti.Focus()
 
-	return &Model{
+	vp := viewport.New(0, 0)
+
+	m := &Model{
 		path:        path,
 		items:       items,
 		selected:    make(map[string]struct{}),
@@ -53,49 +61,82 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 		fsys:        fsys,
 		pathInput:   ti,
 		isInputMode: false,
-	}, nil
+		viewport:    vp,
+	}
+
+	m.viewport.SetContent(m.renderFileList())
+	return m, nil
 }
 
 func (m *Model) Init() tea.Cmd {
+	// Usunięto Focus() stąd, aby uniknąć problemów z inicjalizacją
 	return nil
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	if m.isInputMode {
-		return m.updateInputMode(msg)
-	}
-	return m.updateNormalMode(msg)
-}
-func (m *Model) updateInputMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var cmds []tea.Cmd
 
+	m.pathInput, cmd = m.pathInput.Update(msg)
+	cmds = append(cmds, cmd)
+
+	m.viewport, cmd = m.viewport.Update(msg)
+	cmds = append(cmds, cmd)
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+
+		var nonViewportHeight int
+
+		if m.isInputMode {
+			nonViewportHeight = 7
+			if m.inputErrorMsg != "" {
+				nonViewportHeight++
+			}
+		} else {
+			nonViewportHeight = 5
+		}
+
+		m.viewport.Width = m.width
+		m.viewport.Height = m.height - nonViewportHeight
+	}
+
+	if m.isInputMode {
+		cmd = m.updateInputMode(msg)
+	} else {
+		cmd = m.updateNormalMode(msg)
+	}
+	cmds = append(cmds, cmd)
+
+	m.viewport.SetContent(m.renderFileList())
+	m.ensureCursorVisible()
+
+	return m, tea.Batch(cmds...)
+}
+
+func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case KeyEnter:
 			m.handlePathInputConfirm()
-			return m, nil
+			return nil
 		case KeyEscape, KeyCtrlC:
 			m.handlePathInputCancel()
-			return m, nil
+			return nil
 		}
 	}
-
-	m.pathInput, cmd = m.pathInput.Update(msg)
-	return m, cmd
+	return nil
 }
 
-func isQuitKey(key string) bool {
-	return key == KeyQ || key == KeyCtrlC
-}
-
-func (m *Model) updateNormalMode(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if len(m.items) == 0 && !isQuitKey(msg.String()) {
-			return m, nil
+			return nil
 		}
-
 		switch msg.String() {
 		case KeyCtrlC, KeyQ:
 			return m.handleQuit(msg)
@@ -116,17 +157,18 @@ func (m *Model) updateNormalMode(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case KeyCtrlEnd:
 			m.handleCtrlEnd()
 		case KeyP:
-			cmd := m.handleGoToPath()
-			return m, cmd
+			return m.handleGoToPath()
 		}
 	}
-	return m, nil
+	return nil
 }
 
 func (m *Model) View() string {
+	log.Printf("VIEW: Rendering view, isInputMode: %v", m.isInputMode)
 	var s strings.Builder
 
 	if m.isInputMode {
+		log.Println("VIEW: Calling renderPathInput()")
 		s.WriteString(m.renderPathInput())
 	} else {
 		s.WriteString(Elements.Text.HelpHeader)
@@ -134,7 +176,7 @@ func (m *Model) View() string {
 
 	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
 
-	s.WriteString(m.renderFileList())
+	s.WriteString(m.viewport.View())
 
 	s.WriteString(fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected)))
 
@@ -156,19 +198,37 @@ func (m *Model) renderFileList() string {
 	var s strings.Builder
 	for i, item := range m.items {
 		s.WriteString(m.renderListItem(i, item))
-		s.WriteString("\n")
 	}
 	return s.String()
 }
 
+// KLUCZOWA POPRAWKA JEST TUTAJ
 func (m *Model) renderListItem(index int, item item) string {
-	cursor := Elements.List.CursorEmpty
+	// Definiujemy style dla poszczególnych komponentów linii
+	var cursorStyle, nameStyle lipgloss.Style
+
 	if m.cursor == index {
-		cursor = Icons.Cursor
+		cursorStyle = Styles.List.Cursor
+		nameStyle = Styles.List.Cursor
+	} else {
+		cursorStyle = Styles.List.Normal
+		nameStyle = Styles.List.Normal
 	}
 
 	fullPath := filepath.Join(m.path, item.name)
 	_, isSelected := m.selected[fullPath]
+
+	if item.isExcluded {
+		nameStyle = Styles.List.Excluded
+	} else if isSelected {
+		nameStyle = Styles.List.Selected
+	}
+
+	// Budujemy poszczególne komponenty jako stringi
+	cursorStr := " "
+	if m.cursor == index {
+		cursorStr = Icons.Cursor
+	}
 
 	var prefix, itemIcon string
 	if item.isExcluded {
@@ -180,9 +240,10 @@ func (m *Model) renderListItem(index int, item item) string {
 		} else {
 			prefix = Elements.List.UnselectedPrefix
 		}
-		itemIcon = Icons.File
 		if item.isDir {
 			itemIcon = Icons.Directory
+		} else {
+			itemIcon = Icons.File
 		}
 	}
 
@@ -190,18 +251,26 @@ func (m *Model) renderListItem(index int, item item) string {
 	if item.isDir {
 		itemName += Elements.List.DirectorySuffix
 	}
-	line := fmt.Sprintf("%s %s%s %s", cursor, prefix, itemIcon, itemName)
 
-	if item.isExcluded {
-		return Styles.List.Excluded.Render(line)
-	}
-	if isSelected {
-		return Styles.List.Selected.Render(line)
-	}
-	if m.cursor == index {
-		return Styles.List.Cursor.Render(line)
-	}
-	return line
+	// Tworzymy stringi dla każdej części
+	finalCursor := cursorStyle.Render(cursorStr)
+	finalPrefix := nameStyle.Render(" " + prefix + itemIcon + " ")
+	finalName := nameStyle.Render(itemName)
+
+	// Używamy JoinHorizontal do połączenia komponentów.
+	// Lipgloss sam zadba o prawidłowe obliczenie szerokości.
+	line := lipgloss.JoinHorizontal(lipgloss.Top,
+		finalCursor,
+		finalPrefix,
+		finalName,
+	)
+
+	return line + "\n"
+}
+
+// ... reszta kodu jest poprawna i pozostaje bez zmian ...
+func isQuitKey(key string) bool {
+	return key == KeyQ || key == KeyCtrlC
 }
 
 func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
@@ -228,15 +297,18 @@ func (m *Model) changeDirectory(newPath string) {
 	m.path = newPath
 	m.items = newItems
 	m.cursor = 0
+	m.viewport.GotoTop()
 }
-func (m *Model) handleQuit(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+
+func (m *Model) handleQuit(msg tea.KeyMsg) tea.Cmd {
 	if msg.String() == KeyCtrlC {
 		m.selected = make(map[string]struct{})
 	}
-	return m, tea.Quit
+	return tea.Quit
 }
 
 func (m *Model) handleGoToPath() tea.Cmd {
+	log.Println("HANDLER: handleGoToPath called!")
 	m.isInputMode = true
 	m.inputErrorMsg = ""
 	m.pathInput.SetValue(m.path + string(filepath.Separator))
@@ -252,6 +324,7 @@ func (m *Model) handlePathInputConfirm() {
 		}
 	}
 
+	// POPRAWKA: Używamy m.fsys zamiast fsys
 	absPath, err := m.fsys.Abs(newPath)
 	if err != nil {
 		m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
@@ -358,5 +431,14 @@ func (m *Model) handleCtrlHome() {
 func (m *Model) handleCtrlEnd() {
 	if len(m.items) > 0 {
 		m.cursor = len(m.items) - 1
+	}
+}
+
+func (m *Model) ensureCursorVisible() {
+	if m.cursor < m.viewport.YOffset {
+		m.viewport.SetYOffset(m.cursor)
+	}
+	if m.cursor >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.SetYOffset(m.cursor - m.viewport.Height + 1)
 	}
 }

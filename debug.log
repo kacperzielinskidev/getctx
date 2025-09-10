@@ -1,0 +1,359 @@
+2025/09/10 10:16:15 --- Application Start ---
+2025/09/10 10:16:15 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:15 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:15 HANDLER: handleGoToPath called!
+2025/09/10 10:16:15 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:15 VIEW: Calling renderPathInput()
+2025/09/10 10:16:16 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:16 VIEW: Calling renderPathInput()
+2025/09/10 10:16:16 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:16 VIEW: Calling renderPathInput()
+2025/09/10 10:16:17 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:17 VIEW: Calling renderPathInput()
+2025/09/10 10:16:17 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:17 VIEW: Calling renderPathInput()
+2025/09/10 10:16:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:18 VIEW: Calling renderPathInput()
+2025/09/10 10:16:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:18 VIEW: Calling renderPathInput()
+2025/09/10 10:16:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:18 VIEW: Calling renderPathInput()
+2025/09/10 10:16:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:18 VIEW: Calling renderPathInput()
+2025/09/10 10:16:19 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:19 VIEW: Calling renderPathInput()
+2025/09/10 10:16:19 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:19 VIEW: Calling renderPathInput()
+2025/09/10 10:16:20 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:20 VIEW: Calling renderPathInput()
+2025/09/10 10:16:20 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:20 VIEW: Calling renderPathInput()
+2025/09/10 10:16:20 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:21 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:21 HANDLER: handleGoToPath called!
+2025/09/10 10:16:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:21 VIEW: Calling renderPathInput()
+2025/09/10 10:16:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:21 VIEW: Calling renderPathInput()
+2025/09/10 10:16:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:21 VIEW: Calling renderPathInput()
+2025/09/10 10:16:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:22 VIEW: Calling renderPathInput()
+2025/09/10 10:16:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:16:22 VIEW: Calling renderPathInput()
+2025/09/10 10:16:23 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:23 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:24 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:24 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:25 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:25 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:26 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:26 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:27 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:27 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:28 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:28 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:29 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:29 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:32 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:32 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:36 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:36 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:37 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:37 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:38 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:38 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:39 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:39 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:40 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:41 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:41 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:42 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:42 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:43 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:43 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:44 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:44 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:45 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:45 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:46 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:46 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:47 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:47 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:48 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:48 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:49 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:50 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:50 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:51 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:51 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:52 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:52 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:53 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:53 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:54 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:54 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:55 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:55 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:56 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:56 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:57 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:58 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:58 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:59 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:16:59 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:00 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:00 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:01 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:01 HANDLER: handleGoToPath called!
+2025/09/10 10:17:01 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:01 VIEW: Calling renderPathInput()
+2025/09/10 10:17:01 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:01 VIEW: Calling renderPathInput()
+2025/09/10 10:17:02 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:02 VIEW: Calling renderPathInput()
+2025/09/10 10:17:02 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:02 VIEW: Calling renderPathInput()
+2025/09/10 10:17:02 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:02 VIEW: Calling renderPathInput()
+2025/09/10 10:17:03 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:03 VIEW: Calling renderPathInput()
+2025/09/10 10:17:03 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:03 VIEW: Calling renderPathInput()
+2025/09/10 10:17:03 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:03 VIEW: Calling renderPathInput()
+2025/09/10 10:17:04 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:04 VIEW: Calling renderPathInput()
+2025/09/10 10:17:04 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:04 VIEW: Calling renderPathInput()
+2025/09/10 10:17:04 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:04 VIEW: Calling renderPathInput()
+2025/09/10 10:17:04 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:04 VIEW: Calling renderPathInput()
+2025/09/10 10:17:05 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:05 VIEW: Calling renderPathInput()
+2025/09/10 10:17:05 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:05 VIEW: Calling renderPathInput()
+2025/09/10 10:17:05 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:05 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:06 VIEW: Calling renderPathInput()
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:06 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:07 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:07 HANDLER: handleGoToPath called!
+2025/09/10 10:17:07 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:07 VIEW: Calling renderPathInput()
+2025/09/10 10:17:07 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:07 VIEW: Calling renderPathInput()
+2025/09/10 10:17:08 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:08 VIEW: Calling renderPathInput()
+2025/09/10 10:17:08 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:08 VIEW: Calling renderPathInput()
+2025/09/10 10:17:09 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:09 VIEW: Calling renderPathInput()
+2025/09/10 10:17:09 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:09 VIEW: Calling renderPathInput()
+2025/09/10 10:17:09 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:09 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:10 HANDLER: handleGoToPath called!
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:10 VIEW: Calling renderPathInput()
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:10 VIEW: Calling renderPathInput()
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:10 HANDLER: handleGoToPath called!
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:10 VIEW: Calling renderPathInput()
+2025/09/10 10:17:10 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:10 VIEW: Calling renderPathInput()
+2025/09/10 10:17:11 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:11 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:11 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:11 HANDLER: handleGoToPath called!
+2025/09/10 10:17:11 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:11 VIEW: Calling renderPathInput()
+2025/09/10 10:17:11 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:11 VIEW: Calling renderPathInput()
+2025/09/10 10:17:12 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:12 VIEW: Calling renderPathInput()
+2025/09/10 10:17:12 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:12 VIEW: Calling renderPathInput()
+2025/09/10 10:17:13 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:13 VIEW: Calling renderPathInput()
+2025/09/10 10:17:13 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:13 VIEW: Calling renderPathInput()
+2025/09/10 10:17:14 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:14 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:15 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:15 HANDLER: handleGoToPath called!
+2025/09/10 10:17:15 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:15 VIEW: Calling renderPathInput()
+2025/09/10 10:17:15 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:15 VIEW: Calling renderPathInput()
+2025/09/10 10:17:15 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:15 VIEW: Calling renderPathInput()
+2025/09/10 10:17:16 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:16 VIEW: Calling renderPathInput()
+2025/09/10 10:17:16 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:16 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:17 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:17 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:18 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:18 HANDLER: handleGoToPath called!
+2025/09/10 10:17:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:18 VIEW: Calling renderPathInput()
+2025/09/10 10:17:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:18 VIEW: Calling renderPathInput()
+2025/09/10 10:17:18 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:18 VIEW: Calling renderPathInput()
+2025/09/10 10:17:19 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:19 VIEW: Calling renderPathInput()
+2025/09/10 10:17:20 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:20 VIEW: Calling renderPathInput()
+2025/09/10 10:17:20 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:20 VIEW: Calling renderPathInput()
+2025/09/10 10:17:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:21 VIEW: Calling renderPathInput()
+2025/09/10 10:17:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:21 VIEW: Calling renderPathInput()
+2025/09/10 10:17:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:22 VIEW: Calling renderPathInput()
+2025/09/10 10:17:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:17:22 VIEW: Calling renderPathInput()
+2025/09/10 10:17:22 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:23 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:23 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:24 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:17:24 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:20 --- Application Start ---
+2025/09/10 10:19:20 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:20 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:20 HANDLER: handleGoToPath called!
+2025/09/10 10:19:20 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:20 VIEW: Calling renderPathInput()
+2025/09/10 10:19:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:21 VIEW: Calling renderPathInput()
+2025/09/10 10:19:21 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:21 VIEW: Calling renderPathInput()
+2025/09/10 10:19:22 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:22 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:22 HANDLER: handleGoToPath called!
+2025/09/10 10:19:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:22 VIEW: Calling renderPathInput()
+2025/09/10 10:19:22 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:22 VIEW: Calling renderPathInput()
+2025/09/10 10:19:23 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:23 VIEW: Calling renderPathInput()
+2025/09/10 10:19:23 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:23 VIEW: Calling renderPathInput()
+2025/09/10 10:19:24 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:24 VIEW: Calling renderPathInput()
+2025/09/10 10:19:24 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:24 VIEW: Calling renderPathInput()
+2025/09/10 10:19:24 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:24 VIEW: Calling renderPathInput()
+2025/09/10 10:19:24 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:24 VIEW: Calling renderPathInput()
+2025/09/10 10:19:25 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:25 VIEW: Calling renderPathInput()
+2025/09/10 10:19:25 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:25 VIEW: Calling renderPathInput()
+2025/09/10 10:19:25 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:25 VIEW: Calling renderPathInput()
+2025/09/10 10:19:26 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:26 VIEW: Calling renderPathInput()
+2025/09/10 10:19:26 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:26 VIEW: Calling renderPathInput()
+2025/09/10 10:19:27 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:27 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:27 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:28 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:29 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:29 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:29 HANDLER: handleGoToPath called!
+2025/09/10 10:19:29 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:29 VIEW: Calling renderPathInput()
+2025/09/10 10:19:29 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:29 VIEW: Calling renderPathInput()
+2025/09/10 10:19:30 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:30 VIEW: Calling renderPathInput()
+2025/09/10 10:19:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:30 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:31 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:32 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:32 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:33 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:34 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:35 HANDLER: handleGoToPath called!
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:35 VIEW: Calling renderPathInput()
+2025/09/10 10:19:35 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:35 VIEW: Calling renderPathInput()
+2025/09/10 10:19:36 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:36 VIEW: Calling renderPathInput()
+2025/09/10 10:19:36 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:36 VIEW: Calling renderPathInput()
+2025/09/10 10:19:37 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:37 VIEW: Calling renderPathInput()
+2025/09/10 10:19:37 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:37 VIEW: Calling renderPathInput()
+2025/09/10 10:19:38 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:38 VIEW: Calling renderPathInput()
+2025/09/10 10:19:38 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:38 VIEW: Calling renderPathInput()
+2025/09/10 10:19:39 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:39 VIEW: Calling renderPathInput()
+2025/09/10 10:19:39 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:39 VIEW: Calling renderPathInput()
+2025/09/10 10:19:40 VIEW: Rendering view, isInputMode: true
+2025/09/10 10:19:40 VIEW: Calling renderPathInput()
+2025/09/10 10:19:40 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:41 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:41 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:42 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:42 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:43 VIEW: Rendering view, isInputMode: false
+2025/09/10 10:19:43 VIEW: Rendering view, isInputMode: false
