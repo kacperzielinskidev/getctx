@@ -1,9 +1,8 @@
-// Plik: internal/app/model.go
 package app
 
 import (
 	"fmt"
-	"log"
+	"getctx/internal/logger"
 	"path/filepath"
 	"strings"
 
@@ -278,9 +277,19 @@ func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
 func (m *Model) changeDirectory(newPath string) {
 	newItems, err := loadItems(m.fsys, newPath, m.config)
 	if err != nil {
-		log.Printf("Error reading directory %s: %v", newPath, err)
+		logger.Error("changeDirectory.loadItems", map[string]any{
+			"message": "Failed to load directory items",
+			"path":    newPath,
+			"error":   err.Error(),
+		})
 		return
 	}
+
+	logger.Debug("changeDirectory", map[string]any{
+		"path":       newPath,
+		"item_count": len(newItems),
+	})
+
 	m.path = newPath
 	m.items = newItems
 	m.cursor = 0
@@ -308,12 +317,26 @@ func (m *Model) handleConfirmPathChange() {
 	absPath, err := m.fsys.Abs(newPath)
 	if err != nil {
 		m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
+		logger.Warn("handleConfirmPathChange.Abs", map[string]any{
+			"message": "Could not get absolute path",
+			"path":    newPath,
+			"error":   err.Error(),
+		})
 		return
 	}
 
 	if _, err := loadItems(m.fsys, absPath, m.config); err != nil {
 		m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
+		logger.Error("handleConfirmPathChange.loadItems", map[string]any{
+			"message": "Failed to load directory items on path confirm",
+			"path":    absPath,
+			"error":   err.Error(),
+		})
 	} else {
+		logger.Info("handleConfirmPathChange", map[string]any{
+			"message": "Directory changed successfully via path input",
+			"path":    absPath,
+		})
 		m.changeDirectory(absPath)
 		m.isInputMode = false
 		m.inputErrorMsg = ""

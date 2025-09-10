@@ -3,6 +3,7 @@ package app
 import (
 	"flag"
 	"fmt"
+	"getctx/internal/logger"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -23,6 +24,11 @@ func NewApp() (*App, error) {
 		startPath = flag.Arg(0)
 	}
 
+	logger.Info("NewApp", map[string]string{
+		"outputFile": *outputFilename,
+		"startPath":  startPath,
+	})
+
 	return &App{
 		Config:         NewConfig(),
 		FileSystem:     NewOSFileSystem(),
@@ -34,19 +40,26 @@ func NewApp() (*App, error) {
 func (a *App) Run() error {
 	model, err := NewModel(a.StartPath, a.Config, a.FileSystem)
 	if err != nil {
-		return fmt.Errorf("error initializing TUI model: %w", err)
+		err = fmt.Errorf("error initializing TUI model: %w", err)
+		logger.Error("App.Run.NewModel", err)
+		return err
 	}
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	finalModel, err := p.Run()
 	if err != nil {
-		return fmt.Errorf("an error occurred while running the program: %w", err)
+		err = fmt.Errorf("an error occurred while running the TUI program: %w", err)
+		logger.Error("App.Run.p.Run", err)
+		return err
 	}
+
 	if m, ok := finalModel.(*Model); ok {
 		err := BuildContext(m, a.OutputFilename)
 		if err != nil {
-			return fmt.Errorf("a critical error occurred while creating the context file: %w", err)
+			err = fmt.Errorf("a critical error occurred while creating the context file: %w", err)
+			logger.Error("App.Run.BuildContext", err)
+			return err
 		}
 	}
 
