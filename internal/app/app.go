@@ -1,7 +1,6 @@
 package app
 
 import (
-	"flag"
 	"fmt"
 	"getctx/internal/logger"
 
@@ -15,24 +14,21 @@ type App struct {
 	StartPath      string
 }
 
-func NewApp() (*App, error) {
-	outputFilename := flag.String("o", "context.txt", "The name of the output file")
-	flag.Parse()
-
+func NewApp(outputFilename string, args []string) (*App, error) {
 	startPath := "."
-	if flag.NArg() > 0 {
-		startPath = flag.Arg(0)
+	if len(args) > 0 {
+		startPath = args[0]
 	}
 
 	logger.Info("NewApp", map[string]string{
-		"outputFile": *outputFilename,
+		"outputFile": outputFilename,
 		"startPath":  startPath,
 	})
 
 	return &App{
 		Config:         NewConfig(),
 		FileSystem:     NewOSFileSystem(),
-		OutputFilename: *outputFilename,
+		OutputFilename: outputFilename,
 		StartPath:      startPath,
 	}, nil
 }

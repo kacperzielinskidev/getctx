@@ -109,17 +109,29 @@ func InitGlobalLogger(filename string) (*os.File, error) {
 }
 
 func Debug(name string, data any) {
+	if globalLogger == nil {
+		return
+	}
 	globalLogger.Debug(name, data)
 }
 
 func Info(name string, data any) {
+	if globalLogger == nil {
+		return
+	}
 	globalLogger.Info(name, data)
 }
 
 func Warn(name string, data any) {
+	if globalLogger == nil {
+		return
+	}
 	globalLogger.Warn(name, data)
 }
 
 func Error(name string, data any) {
+	if globalLogger == nil {
+		return
+	}
 	globalLogger.Error(name, data)
 }

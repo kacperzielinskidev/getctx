@@ -2,6 +2,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -10,15 +11,23 @@ import (
 )
 
 func main() {
+	debug := flag.Bool("debug", false, "Enable debug logging to debug.log")
+	outputFilename := flag.String("o", "context.txt", "The name of the output file")
+	flag.Parse()
 
-	logFile, err := logger.InitGlobalLogger("debug.log")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "CRITICAL: Failed to initialize logger: %v\n", err)
-		os.Exit(1)
+	debugEnv := os.Getenv("GETCTX_DEBUG")
+	enableLogging := *debug || debugEnv == "true" || debugEnv == "1"
+
+	if enableLogging {
+		logFile, err := logger.InitGlobalLogger("debug.log")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "CRITICAL: Failed to initialize logger: %v\n", err)
+		} else {
+			defer logFile.Close()
+		}
 	}
-	defer logFile.Close()
 
-	application, err := app.NewApp()
+	application, err := app.NewApp(*outputFilename, flag.Args())
 	if err != nil {
 		logger.Error("main.NewApp", err)
 		fmt.Fprintf(os.Stderr, "Initialization error: %v\n", err)

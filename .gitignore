@@ -1,3 +1,4 @@
 bin
 context.txt
 *.log
+.env

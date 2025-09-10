@@ -7,3 +7,6 @@ build:
 
 run: build
 	@$(BINARY_PATH)
+
+run-debug: build
+	@$(BINARY_PATH) --debug
