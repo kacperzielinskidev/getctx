@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// ... (structy, NewModel, Init, Update i większość funkcji bez zmian) ...
 type item struct {
 	name       string
 	isDir      bool
@@ -69,7 +68,6 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 }
 
 func (m *Model) Init() tea.Cmd {
-	// Usunięto Focus() stąd, aby uniknąć problemów z inicjalizacją
 	return nil
 }
 
@@ -88,19 +86,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 
-		var nonViewportHeight int
-
+		var header strings.Builder
 		if m.isInputMode {
-			nonViewportHeight = 7
-			if m.inputErrorMsg != "" {
-				nonViewportHeight++
-			}
+			header.WriteString(m.renderPathInput())
 		} else {
-			nonViewportHeight = 5
+			header.WriteString(Elements.Text.HelpHeader)
 		}
+		header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+
+		footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
+
+		headerHeight := lipgloss.Height(header.String())
+		footerHeight := lipgloss.Height(footer)
 
 		m.viewport.Width = m.width
-		m.viewport.Height = m.height - nonViewportHeight
+		m.viewport.Height = m.height - headerHeight - footerHeight
 	}
 
 	if m.isInputMode {
@@ -164,28 +164,24 @@ func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) View() string {
-	log.Printf("VIEW: Rendering view, isInputMode: %v", m.isInputMode)
-	var s strings.Builder
-
+	var header strings.Builder
 	if m.isInputMode {
-		log.Println("VIEW: Calling renderPathInput()")
-		s.WriteString(m.renderPathInput())
+		header.WriteString(m.renderPathInput())
 	} else {
-		s.WriteString(Elements.Text.HelpHeader)
+		header.WriteString(Elements.Text.HelpHeader)
 	}
+	header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
 
-	s.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+	footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
 
-	s.WriteString(m.viewport.View())
-
-	s.WriteString(fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected)))
-
-	return s.String()
+	return header.String() + m.viewport.View() + footer
 }
 
 func (m *Model) renderPathInput() string {
 	var s strings.Builder
-	s.WriteString("Enter path (Enter to confirm, Esc to cancel):\n")
+
+	s.WriteString(Elements.Text.InputHeader)
+
 	s.WriteString(m.pathInput.View())
 	if m.inputErrorMsg != "" {
 		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
@@ -202,9 +198,7 @@ func (m *Model) renderFileList() string {
 	return s.String()
 }
 
-// KLUCZOWA POPRAWKA JEST TUTAJ
 func (m *Model) renderListItem(index int, item item) string {
-	// Definiujemy style dla poszczególnych komponentów linii
 	var cursorStyle, nameStyle lipgloss.Style
 
 	if m.cursor == index {
@@ -224,8 +218,7 @@ func (m *Model) renderListItem(index int, item item) string {
 		nameStyle = Styles.List.Selected
 	}
 
-	// Budujemy poszczególne komponenty jako stringi
-	cursorStr := " "
+	cursorStr := Elements.List.CursorEmpty
 	if m.cursor == index {
 		cursorStr = Icons.Cursor
 	}
@@ -254,7 +247,7 @@ func (m *Model) renderListItem(index int, item item) string {
 
 	// Tworzymy stringi dla każdej części
 	finalCursor := cursorStyle.Render(cursorStr)
-	finalPrefix := nameStyle.Render(" " + prefix + itemIcon + " ")
+	finalPrefix := nameStyle.Render(Elements.List.CursorEmpty + prefix + itemIcon + Elements.List.CursorEmpty)
 	finalName := nameStyle.Render(itemName)
 
 	// Używamy JoinHorizontal do połączenia komponentów.
