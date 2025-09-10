@@ -45,7 +45,6 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 	}
 
 	ti := textinput.New()
-
 	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
 	ti.Focus()
 
@@ -74,37 +73,41 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 
-	m.pathInput, cmd = m.pathInput.Update(msg)
-	cmds = append(cmds, cmd)
-
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
-
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
+
+		inputWidth := m.width - len(m.pathInput.Prompt) - 1
+		inputWidth = max(inputWidth, 1)
+
+		m.pathInput.Width = inputWidth
+
+		logger.Debug("WindowSizeMsg", map[string]any{
+			"model.width":      m.width,
+			"model.height":     m.height,
+			"pathInput.Width":  m.pathInput.Width,
+			"prompt_len":       len(m.pathInput.Prompt),
+			"calculated_width": inputWidth,
+		})
 	}
 
 	if m.isInputMode {
+		m.pathInput, cmd = m.pathInput.Update(msg)
+		cmds = append(cmds, cmd)
 		cmd = m.updateInputMode(msg)
 	} else {
+		m.viewport, cmd = m.viewport.Update(msg)
+		cmds = append(cmds, cmd)
 		cmd = m.updateNormalMode(msg)
 	}
 	cmds = append(cmds, cmd)
 
-	var header strings.Builder
-	if m.isInputMode {
-		header.WriteString(m.renderPathInput())
-	} else {
-		header.WriteString(Elements.Text.HelpHeader)
-	}
-	header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+	headerContent := m.renderHeader()
+	footerContent := m.renderFooter()
 
-	footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
-
-	headerHeight := lipgloss.Height(header.String())
-	footerHeight := lipgloss.Height(footer)
+	headerHeight := lipgloss.Height(headerContent)
+	footerHeight := lipgloss.Height(footerContent)
 
 	m.viewport.Width = m.width
 	m.viewport.Height = m.height - headerHeight - footerHeight
@@ -165,30 +168,46 @@ func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 }
 
 func (m *Model) View() string {
-	var header strings.Builder
-	if m.isInputMode {
-		header.WriteString(m.renderPathInput())
-	} else {
-		header.WriteString(Elements.Text.HelpHeader)
-	}
-	header.WriteString(Elements.Text.PathPrefix + m.path + "\n\n")
+	header := m.renderHeader()
+	footer := m.renderFooter()
 
-	footer := fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
-
-	return header.String() + m.viewport.View() + footer
+	return lipgloss.JoinVertical(lipgloss.Left,
+		header,
+		m.viewport.View(),
+		footer,
+	)
 }
 
 func (m *Model) renderPathInput() string {
 	var s strings.Builder
-
 	s.WriteString(Elements.Text.InputHeader)
 	s.WriteString(m.pathInput.View())
 
 	if m.inputErrorMsg != "" {
 		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
 	}
-	s.WriteString("\n\n")
+	s.WriteString("\n")
 	return s.String()
+}
+
+func (m *Model) renderHeader() string {
+	if m.isInputMode {
+		return m.renderPathInput()
+	}
+
+	helpHeader := Elements.Text.HelpHeader
+	pathStyle := lipgloss.NewStyle().Width(m.width)
+	fullPathString := Elements.Text.PathPrefix + m.path
+	wrappedPath := pathStyle.Render(fullPathString)
+
+	return lipgloss.JoinVertical(lipgloss.Left,
+		helpHeader,
+		wrappedPath,
+	)
+}
+
+func (m *Model) renderFooter() string {
+	return fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
 }
 
 func (m *Model) renderFileList() string {
