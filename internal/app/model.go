@@ -136,9 +136,6 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if len(m.items) == 0 && !isQuitKey(msg.String()) {
-			return nil
-		}
 		switch msg.String() {
 		case KeyQ:
 			return m.handleConfirmAndExit()
