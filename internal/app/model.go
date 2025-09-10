@@ -121,10 +121,10 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case KeyEnter:
-			m.handlePathInputConfirm()
+			m.handleConfirmPathChange()
 			return nil
 		case KeyEscape, KeyCtrlC:
-			m.handlePathInputCancel()
+			m.handleCancelPathChange()
 			return nil
 		}
 	}
@@ -138,26 +138,28 @@ func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 			return nil
 		}
 		switch msg.String() {
-		case KeyCtrlC, KeyQ:
-			return m.handleQuit(msg)
+		case KeyQ:
+			return m.handleConfirmAndExit()
+		case KeyCtrlC:
+			return m.handleCancelAndExit()
 		case KeyUp:
-			m.handleKeyUp()
+			m.handleMoveCursorUp()
 		case KeyDown:
-			m.handleKeyDown()
+			m.handleMoveCursorDown()
 		case KeyEnter:
-			m.handleEnter()
+			m.handleEnterDirectory()
 		case KeyBackspace:
-			m.handleBackspace()
+			m.handleNavigateToParent()
 		case KeySpace:
-			m.handleSpace()
+			m.handleSelectFile()
 		case KeyCtrlA:
-			m.handleCtrlA()
+			m.handleSelectAllFiles()
 		case KeyCtrlHome:
-			m.handleCtrlHome()
+			m.handleGoToTop()
 		case KeyCtrlEnd:
-			m.handleCtrlEnd()
+			m.handleGoToBottom()
 		case KeyP:
-			return m.handleGoToPath()
+			return m.handleEnterPathInputMode()
 		}
 	}
 	return nil
@@ -245,13 +247,10 @@ func (m *Model) renderListItem(index int, item item) string {
 		itemName += Elements.List.DirectorySuffix
 	}
 
-	// Tworzymy stringi dla każdej części
 	finalCursor := cursorStyle.Render(cursorStr)
 	finalPrefix := nameStyle.Render(Elements.List.CursorEmpty + prefix + itemIcon + Elements.List.CursorEmpty)
 	finalName := nameStyle.Render(itemName)
 
-	// Używamy JoinHorizontal do połączenia komponentów.
-	// Lipgloss sam zadba o prawidłowe obliczenie szerokości.
 	line := lipgloss.JoinHorizontal(lipgloss.Top,
 		finalCursor,
 		finalPrefix,
@@ -259,11 +258,6 @@ func (m *Model) renderListItem(index int, item item) string {
 	)
 
 	return line + "\n"
-}
-
-// ... reszta kodu jest poprawna i pozostaje bez zmian ...
-func isQuitKey(key string) bool {
-	return key == KeyQ || key == KeyCtrlC
 }
 
 func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
@@ -293,22 +287,23 @@ func (m *Model) changeDirectory(newPath string) {
 	m.viewport.GotoTop()
 }
 
-func (m *Model) handleQuit(msg tea.KeyMsg) tea.Cmd {
-	if msg.String() == KeyCtrlC {
-		m.selected = make(map[string]struct{})
-	}
+// func (m *Model) handleQuit(msg tea.KeyMsg) tea.Cmd {
+// 	if msg.String() == KeyCtrlC {
+// 		m.selected = make(map[string]struct{})
+// 	}
+// 	return tea.Quit
+// }
+
+func (m *Model) handleConfirmAndExit() tea.Cmd {
 	return tea.Quit
 }
 
-func (m *Model) handleGoToPath() tea.Cmd {
-	log.Println("HANDLER: handleGoToPath called!")
-	m.isInputMode = true
-	m.inputErrorMsg = ""
-	m.pathInput.SetValue(m.path + string(filepath.Separator))
-	return m.pathInput.Focus()
+func (m *Model) handleCancelAndExit() tea.Cmd {
+	m.selected = make(map[string]struct{})
+	return tea.Quit
 }
 
-func (m *Model) handlePathInputConfirm() {
+func (m *Model) handleConfirmPathChange() {
 	newPath := m.pathInput.Value()
 	if strings.HasPrefix(newPath, "~") {
 		home, err := m.fsys.UserHomeDir()
@@ -317,7 +312,6 @@ func (m *Model) handlePathInputConfirm() {
 		}
 	}
 
-	// POPRAWKA: Używamy m.fsys zamiast fsys
 	absPath, err := m.fsys.Abs(newPath)
 	if err != nil {
 		m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
@@ -334,25 +328,25 @@ func (m *Model) handlePathInputConfirm() {
 	}
 }
 
-func (m *Model) handlePathInputCancel() {
+func (m *Model) handleCancelPathChange() {
 	m.isInputMode = false
 	m.inputErrorMsg = ""
 	m.pathInput.Reset()
 }
 
-func (m *Model) handleKeyUp() {
+func (m *Model) handleMoveCursorUp() {
 	if m.cursor > 0 {
 		m.cursor--
 	}
 }
 
-func (m *Model) handleKeyDown() {
+func (m *Model) handleMoveCursorDown() {
 	if m.cursor < len(m.items)-1 {
 		m.cursor++
 	}
 }
 
-func (m *Model) handleEnter() {
+func (m *Model) handleEnterDirectory() {
 	if len(m.items) == 0 {
 		return
 	}
@@ -362,14 +356,14 @@ func (m *Model) handleEnter() {
 	}
 }
 
-func (m *Model) handleBackspace() {
+func (m *Model) handleNavigateToParent() {
 	parentPath := filepath.Dir(m.path)
 	if parentPath != m.path {
 		m.changeDirectory(parentPath)
 	}
 }
 
-func (m *Model) handleSpace() {
+func (m *Model) handleSelectFile() {
 	if len(m.items) == 0 {
 		return
 	}
@@ -384,7 +378,7 @@ func (m *Model) handleSpace() {
 	}
 }
 
-func (m *Model) handleCtrlA() {
+func (m *Model) handleSelectAllFiles() {
 	allSelectableAreSelected := true
 	hasSelectableItems := false
 	for _, item := range m.items {
@@ -415,16 +409,23 @@ func (m *Model) handleCtrlA() {
 	}
 }
 
-func (m *Model) handleCtrlHome() {
+func (m *Model) handleGoToTop() {
 	if len(m.items) > 0 {
 		m.cursor = 0
 	}
 }
 
-func (m *Model) handleCtrlEnd() {
+func (m *Model) handleGoToBottom() {
 	if len(m.items) > 0 {
 		m.cursor = len(m.items) - 1
 	}
+}
+
+func (m *Model) handleEnterPathInputMode() tea.Cmd {
+	m.isInputMode = true
+	m.inputErrorMsg = ""
+	m.pathInput.SetValue(m.path + string(filepath.Separator))
+	return m.pathInput.Focus()
 }
 
 func (m *Model) ensureCursorVisible() {
@@ -434,4 +435,8 @@ func (m *Model) ensureCursorVisible() {
 	if m.cursor >= m.viewport.YOffset+m.viewport.Height {
 		m.viewport.SetYOffset(m.cursor - m.viewport.Height + 1)
 	}
+}
+
+func isQuitKey(key string) bool {
+	return key == KeyQ || key == KeyCtrlC
 }
