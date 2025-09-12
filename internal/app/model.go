@@ -456,7 +456,15 @@ func (m *Model) handleGoToBottom() {
 func (m *Model) handleEnterPathInputMode() tea.Cmd {
 	m.isInputMode = true
 	m.inputErrorMsg = ""
-	m.pathInput.SetValue(m.path + string(filepath.Separator))
+
+	var initialInput string
+	if m.path == string(filepath.Separator) {
+		initialInput = m.path
+	} else {
+		initialInput = m.path + string(filepath.Separator)
+	}
+
+	m.pathInput.SetValue(initialInput)
 	return m.pathInput.Focus()
 }
 
