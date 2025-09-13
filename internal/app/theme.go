@@ -33,6 +33,7 @@ type TUITextElements struct {
 	InputHeader  string
 	PathPrefix   string
 	StatusFooter string
+	EmptyMessage string
 }
 
 type TUIElements struct {
@@ -71,6 +72,7 @@ type TUITexts struct {
 	InputHeaderHint string
 	PathPrefix      string
 	StatusFooter    string
+	EmptyMessage    string
 }
 
 var Icons TUIIcons
@@ -119,6 +121,7 @@ func init() {
 		InputHeaderHint: "(ENTER: Confirm, ESCAPE: Cancel, CTRL+W: Remove whole line)",
 		PathPrefix:      "Current path: ",
 		StatusFooter:    "\nSelected %d items. Press 'q' to save and exit.",
+		EmptyMessage:    "[ This directory is empty ]",
 	}
 
 	Elements = TUIElements{
@@ -139,6 +142,7 @@ func init() {
 			) + "\n",
 			PathPrefix:   texts.PathPrefix,
 			StatusFooter: texts.StatusFooter,
+			EmptyMessage: texts.EmptyMessage,
 		},
 	}
 

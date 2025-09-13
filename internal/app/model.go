@@ -221,7 +221,7 @@ func (m *Model) renderFileList() string {
 }
 
 func (m *Model) renderEmptyFileList() string {
-	emptyMessage := "[ This directory is empty ]"
+	emptyMessage := Elements.Text.EmptyMessage
 	padding := strings.Repeat("\n", m.viewport.Height/2)
 
 	style := Styles.List.Empty.
