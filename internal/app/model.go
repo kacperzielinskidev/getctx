@@ -208,11 +208,27 @@ func (m *Model) renderFooter() string {
 }
 
 func (m *Model) renderFileList() string {
+
+	if len(m.items) == 0 {
+		return m.renderEmptyFileList()
+	}
+
 	var s strings.Builder
 	for i, item := range m.items {
 		s.WriteString(m.renderListItem(i, item))
 	}
 	return s.String()
+}
+
+func (m *Model) renderEmptyFileList() string {
+	emptyMessage := "[ This directory is empty ]"
+	padding := strings.Repeat("\n", m.viewport.Height/2)
+
+	style := Styles.List.Empty.
+		Width(m.viewport.Width).
+		Align(lipgloss.Center)
+
+	return style.Render(padding + emptyMessage)
 }
 
 func (m *Model) renderListItem(index int, item item) string {
@@ -456,7 +472,8 @@ func (m *Model) handleGoToBottom() {
 func (m *Model) handleEnterPathInputMode() tea.Cmd {
 	m.isInputMode = true
 	m.inputErrorMsg = ""
-	m.pathInput.SetValue(m.path + string(filepath.Separator))
+	m.pathInput.SetValue(m.path)
+
 	return m.pathInput.Focus()
 }
 

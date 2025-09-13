@@ -51,6 +51,7 @@ type TUIListStyles struct {
 	Excluded lipgloss.Style
 	Normal   lipgloss.Style
 	Hint     lipgloss.Style
+	Empty    lipgloss.Style
 }
 
 type TUILogStyles struct {
@@ -103,6 +104,7 @@ func init() {
 			Excluded: lipgloss.NewStyle().Faint(true),
 			Normal:   lipgloss.NewStyle(),
 			Hint:     lipgloss.NewStyle().Foreground(colorCyan),
+			Empty:    lipgloss.NewStyle().Faint(true),
 		},
 		Log: TUILogStyles{
 			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),
