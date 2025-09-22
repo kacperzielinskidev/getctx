@@ -32,9 +32,9 @@ The project follows modern Go application design, emphasizing a clear **Separati
 - **`internal/app/model.go`**: **Terminal User Interface (TUI) Core**.
 
   - All interactive logic resides here, built using the **`bubbletea`** library and the Model-View-Update pattern.
-  - **`Model` struct**: Holds the entire TUI state, including the cursor, selected items, and error messages.
+  - **`Model` struct**: Holds the entire TUI state, including the cursor, selected items, current path, and modes (e.g., input mode, filter mode).
   - **`View()` method**: Renders the UI based on the model's state.
-  - **`Update()` method**: A key component that handles all user input and state changes. It now performs **dynamic layout calculation on every frame**, ensuring the UI remains responsive and correctly sized even when components (like error messages) appear or disappear.
+  - **`Update()` method**: A key component that handles all user input and state changes. It now performs **dynamic layout calculation on every frame**, ensuring the UI remains responsive and correctly sized.
   - Integrates a **`viewport`** component to smoothly handle scrolling through long file lists.
 
 - **`internal/app/build_context.go`**: **Business Logic**.
@@ -51,7 +51,7 @@ The project follows modern Go application design, emphasizing a clear **Separati
 - **`internal/app/theme.go`**: **Theme & Style Definitions**.
 
   - Centralizes all visual elements (icons, colors, `lipgloss` styles).
-  - Refactored to separate raw text content (e.g., help messages) from the styling logic, improving maintainability.
+  - Includes helper functions to format UI components, such as the filter status indicator, ensuring a consistent look and feel.
 
 - **`internal/app/keybindings.go`**: **Keybinding Definitions**.
 
@@ -64,29 +64,41 @@ The project follows modern Go application design, emphasizing a clear **Separati
 
 - **File System Navigation:** The user navigates the filesystem with arrow keys (`handleMoveCursorUp`/`Down`). `Enter` (`handleEnterDirectory`) opens a directory, and `Backspace` (`handleNavigateToParent`) goes to the parent directory.
 
+- **In-View Filtering (Search):**
+
+  - **Activation:** Pressing `/` (`handleEnterFilterMode`) activates a filter input field.
+  - **Live Filtering:** The list of currently visible items is filtered in real-time as the user types. The search is case-insensitive and operates purely in-memory for instant feedback.
+  - **Interacting with Results:** Pressing `Enter` exits the text input mode but **keeps the view filtered**, allowing the user to navigate and select items from the search results using the standard keys (`Space`, `CTRL+A`).
+  - **Clearing the Filter:** To restore the full directory view, the user can press `Escape` or `CTRL+C`. Any selections made on the filtered items will be preserved. Navigating to a new directory also clears the filter automatically.
+  - **User Guidance:** A clear indicator `[Filtering by: "query"]` is displayed in the header to inform the user that their view is filtered.
+
 - **Direct Path Input Mode:**
 
   - **Activation:** Pressing `CTRL+P` (`handleEnterPathInputMode`) activates a text input field.
   - **Functionality:** Allows the user to directly type or paste an absolute or relative path. Supports `~` as a shortcut for the user's home directory.
-  - **User Guidance:** Clear, color-coded on-screen hints (`(enter: Confirm, esc: Cancel)`) guide the user.
+  - **User Guidance:** Clear, color-coded on-screen hints (`(enter: Confirm, esc/ctrl+c: Cancel)`) guide the user.
   - **Confirmation & Cancellation:** `Enter` (`handleConfirmPathChange`) attempts to navigate to the path. `Esc` or `CTRL+C` (`handleCancelPathChange`) exits the input mode without changes.
-  - **Error Handling:** If an invalid path is entered, a non-disruptive error message appears directly below the input field without breaking the UI layout.
+  - **Error Handling:** If an invalid path is entered, a non-disruptive error message appears directly below the input field.
 
 - **Intelligent File Exclusion (Blacklist):** The tool maintains a configurable list of names to ignore (e.g., `.git`, `node_modules`). Ignored items are visually dimmed and cannot be interacted with.
 
 - **Selection:**
 
-  - `Spacebar` (`handleSelectFile`): Toggles selection for a single item.
-  - `CTRL+A` (`handleSelectAllFiles`): Toggles selection for all visible items.
+  - `Spacebar` (`handleSelectFile`): Toggles selection for a single item (works on both full and filtered lists).
+  - `CTRL+A` (`handleSelectAllFiles`): Toggles selection for all _visible_ items (works on both full and filtered lists).
 
-- **Dynamic & Responsive UI:** The TUI is fully responsive. The `viewport` ensures that lists of any length are scrollable, and the appearance of error messages correctly resizes the view without breaking the UI layout.
+- **Dynamic & Responsive UI:** The TUI is fully responsive. The `viewport` ensures that lists of any length are scrollable, and the appearance of status messages or input fields correctly resizes the view without breaking the UI layout.
 
 - **Structured Logging:** All significant application events, warnings, and errors are logged to `debug.log` in a machine-readable JSON format for easier debugging.
 
-- **Program Exit:**
+- **Program Exit & Cancellation:**
 
-  - `q` (`handleConfirmAndExit`): Exits and initiates the build process.
-  - `CTRL+C` (`handleCancelAndExit`): Clears all selections and exits without saving.
+  - `q` (`handleConfirmAndExit`): Exits and initiates the build process with the current selections.
+  - `CTRL+C`: This key is now context-aware:
+    - If the view is **filtered**, it clears the filter.
+    - If an **input field** (path or filter) is active, it cancels the input.
+    - Otherwise, it clears all selections and exits the application (`handleCancelAndExit`).
+  - `Escape`: Clears an active filter or cancels an input field.
 
 - **Enhanced Styling:** The application uses `lipgloss` for a modern look. Keybinding hints in the help text are color-coded to improve usability.
 
@@ -94,5 +106,5 @@ The project follows modern Go application design, emphasizing a clear **Separati
 
 - `github.com/charmbracelet/bubbletea`: The TUI framework.
 - `github.com/charmbracelet/bubbles/viewport`: The component for scrollable views.
-- `github.com/charmbracelet/bubbles/textinput`: The component that provides the text input field for the 'Direct Path Input' feature.
+- `github.com/charmbracelet/bubbles/textinput`: The component that provides text input fields for the 'Direct Path Input' and 'In-View Filtering' features.
 - `github.com/charmbracelet/lipgloss`: The library for terminal styling.
