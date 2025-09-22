@@ -85,13 +85,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.pathInput.Width = inputWidth
 
-		logger.Debug("WindowSizeMsg", map[string]any{
-			"model.width":      m.width,
-			"model.height":     m.height,
-			"pathInput.Width":  m.pathInput.Width,
-			"prompt_len":       len(m.pathInput.Prompt),
-			"calculated_width": inputWidth,
-		})
 	}
 
 	if m.isInputMode {
@@ -416,16 +409,7 @@ func (m *Model) handleConfirmPathChange() {
 
 	if _, err := loadItems(m.fsys, absPath, m.config); err != nil {
 		m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
-		logger.Error("handleConfirmPathChange.loadItems", map[string]any{
-			"message": "Failed to load directory items on path confirm",
-			"path":    absPath,
-			"error":   err.Error(),
-		})
 	} else {
-		logger.Info("handleConfirmPathChange", map[string]any{
-			"message": "Directory changed successfully via path input",
-			"path":    absPath,
-		})
 		m.changeDirectory(absPath)
 		m.isInputMode = false
 		m.inputErrorMsg = ""
@@ -557,10 +541,7 @@ func (m *Model) handleCancelFilter() {
 
 func (m *Model) clampCursor() {
 	visibleItems := m.getVisibleItems()
-	maxCursor := len(visibleItems) - 1
-	if maxCursor < 0 {
-		maxCursor = 0
-	}
+	maxCursor := max(len(visibleItems)-1, 0)
 	if m.cursor > maxCursor {
 		m.cursor = maxCursor
 	}
