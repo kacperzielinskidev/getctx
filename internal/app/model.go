@@ -82,14 +82,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		inputWidth = max(inputWidth, 1)
 
 		m.pathInput.Width = inputWidth
-
-		logger.Debug("WindowSizeMsg", map[string]any{
-			"model.width":      m.width,
-			"model.height":     m.height,
-			"pathInput.Width":  m.pathInput.Width,
-			"prompt_len":       len(m.pathInput.Prompt),
-			"calculated_width": inputWidth,
-		})
 	}
 
 	if m.isInputMode {
