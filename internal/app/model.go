@@ -117,7 +117,7 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 		case KeyEnter:
 			m.handleConfirmPathChange()
 			return nil
-		case KeyEscape, KeyCtrlC:
+		case KeyCtrlC:
 			m.handleCancelPathChange()
 			return nil
 		}
