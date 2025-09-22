@@ -1,6 +1,10 @@
 package app
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"fmt"
+
+	"github.com/charmbracelet/lipgloss"
+)
 
 const (
 	colorGreen lipgloss.Color = "34"
@@ -29,11 +33,13 @@ type TUIListElements struct {
 }
 
 type TUITextElements struct {
-	HelpHeader   string
-	InputHeader  string
-	PathPrefix   string
-	StatusFooter string
-	EmptyMessage string
+	HelpHeader      string
+	InputHeader     string
+	FilterHeader    string
+	FilterIndicator string
+	PathPrefix      string
+	StatusFooter    string
+	EmptyMessage    string
 }
 
 type TUIElements struct {
@@ -66,13 +72,16 @@ type TUIStyles struct {
 }
 
 type TUITexts struct {
-	HelpHeaderBase  string
-	HelpHeaderHint  string
-	InputHeaderBase string
-	InputHeaderHint string
-	PathPrefix      string
-	StatusFooter    string
-	EmptyMessage    string
+	HelpHeaderBase        string
+	HelpHeaderHint        string
+	InputHeaderBase       string
+	InputHeaderHint       string
+	FilterHeaderBase      string
+	FilterHeaderHint      string
+	FilterIndicatorFormat string
+	PathPrefix            string
+	StatusFooter          string
+	EmptyMessage          string
 }
 
 var Icons TUIIcons
@@ -115,13 +124,16 @@ func init() {
 	}
 
 	texts := TUITexts{
-		HelpHeaderBase:  "Select files ",
-		HelpHeaderHint:  "(SPACE: Select File, CTRL+HOME: Go to Top, CTRL+END: Go to Bottom, CTRL+P: Find Path, Q: Save)",
-		InputHeaderBase: "Enter path ",
-		InputHeaderHint: "(ENTER: Confirm, CTRL+C: Cancel, CTRL+W: Remove whole line)",
-		PathPrefix:      "Current path: ",
-		StatusFooter:    "\nSelected %d items. Press 'q' to save and exit.",
-		EmptyMessage:    "[ This directory is empty ]",
+		HelpHeaderBase:        "Select files ",
+		HelpHeaderHint:        "(SPACE: Select File, CTRL+HOME: Go to Top, CTRL+END: Go to Bottom, CTRL+P: Find Path, Q: Save)",
+		InputHeaderBase:       "Enter path ",
+		InputHeaderHint:       "(ENTER: Confirm, ESCAPE: Cancel, CTRL+W: Remove whole line)",
+		FilterHeaderBase:      "Filter ",
+		FilterHeaderHint:      "(Type to filter, ENTER: Confirm, ESCAPE: Cancel)",
+		FilterIndicatorFormat: " [Filtering by: \"%s\"]",
+		PathPrefix:            "Current path: ",
+		StatusFooter:          "\nSelected %d items. Press 'q' to save and exit.",
+		EmptyMessage:          "[ This directory is empty ]",
 	}
 
 	Elements = TUIElements{
@@ -140,10 +152,23 @@ func init() {
 				texts.InputHeaderBase,
 				Styles.List.Hint.Render(texts.InputHeaderHint),
 			) + "\n",
-			PathPrefix:   texts.PathPrefix,
-			StatusFooter: texts.StatusFooter,
-			EmptyMessage: texts.EmptyMessage,
+			FilterHeader: lipgloss.JoinHorizontal(lipgloss.Left,
+				texts.FilterHeaderBase,
+				Styles.List.Hint.Render(texts.FilterHeaderHint),
+			) + "\n",
+			FilterIndicator: texts.FilterIndicatorFormat,
+			PathPrefix:      texts.PathPrefix,
+			StatusFooter:    texts.StatusFooter,
+			EmptyMessage:    texts.EmptyMessage,
 		},
 	}
 
+}
+
+func FormatFilterIndicator(query string) string {
+	if query == "" {
+		return ""
+	}
+	indicator := fmt.Sprintf(Elements.Text.FilterIndicator, query)
+	return Styles.List.Hint.Render(indicator)
 }
