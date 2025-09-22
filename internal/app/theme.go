@@ -33,6 +33,7 @@ type TUITextElements struct {
 	InputHeader  string
 	PathPrefix   string
 	StatusFooter string
+	EmptyMessage string
 }
 
 type TUIElements struct {
@@ -51,6 +52,7 @@ type TUIListStyles struct {
 	Excluded lipgloss.Style
 	Normal   lipgloss.Style
 	Hint     lipgloss.Style
+	Empty    lipgloss.Style
 }
 
 type TUILogStyles struct {
@@ -70,6 +72,7 @@ type TUITexts struct {
 	InputHeaderHint string
 	PathPrefix      string
 	StatusFooter    string
+	EmptyMessage    string
 }
 
 var Icons TUIIcons
@@ -103,6 +106,7 @@ func init() {
 			Excluded: lipgloss.NewStyle().Faint(true),
 			Normal:   lipgloss.NewStyle(),
 			Hint:     lipgloss.NewStyle().Foreground(colorCyan),
+			Empty:    lipgloss.NewStyle().Faint(true),
 		},
 		Log: TUILogStyles{
 			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),
@@ -117,6 +121,7 @@ func init() {
 		InputHeaderHint: "(ENTER: Confirm, ESCAPE: Cancel, CTRL+W: Remove whole line)",
 		PathPrefix:      "Current path: ",
 		StatusFooter:    "\nSelected %d items. Press 'q' to save and exit.",
+		EmptyMessage:    "[ This directory is empty ]",
 	}
 
 	Elements = TUIElements{
@@ -137,6 +142,7 @@ func init() {
 			) + "\n",
 			PathPrefix:   texts.PathPrefix,
 			StatusFooter: texts.StatusFooter,
+			EmptyMessage: texts.EmptyMessage,
 		},
 	}
 
