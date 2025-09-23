@@ -3,8 +3,6 @@ package app
 import (
 	"fmt"
 	"getctx/internal/logger"
-	"path/filepath"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -79,12 +77,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-
-		inputWidth := m.width - len(m.pathInput.Prompt) - 1
-		inputWidth = max(inputWidth, 1)
-
+		inputWidth := max(m.width-len(m.pathInput.Prompt)-1, 1)
 		m.pathInput.Width = inputWidth
-
 	}
 
 	if m.isInputMode {
@@ -104,232 +98,33 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	headerContent := m.renderHeader()
 	footerContent := m.renderFooter()
-
 	headerHeight := lipgloss.Height(headerContent)
 	footerHeight := lipgloss.Height(footerContent)
-
 	m.viewport.Width = m.width
 	m.viewport.Height = m.height - headerHeight - footerHeight
-
 	m.viewport.SetContent(m.renderFileList())
 	m.ensureCursorVisible()
 
 	return m, tea.Batch(cmds...)
 }
 
-func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case KeyEnter:
-			m.handleConfirmPathChange()
-			return nil
-		case KeyEscape:
-			m.handleCancelPathChange()
-			return nil
-		}
-	}
-	return nil
-}
-
-func (m *Model) updateFilterMode(msg tea.Msg) tea.Cmd {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case KeyEnter:
-			m.isFilterMode = false
-			return nil
-		case KeyEscape:
-			m.handleCancelFilter()
-			return nil
-		}
-	}
-	m.filterQuery = m.pathInput.Value()
-	m.clampCursor()
-	return nil
-}
-
-func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case KeyEscape:
-			m.handleClearFilter()
-			return nil
-		case KeyQ:
-			return m.handleConfirmAndExit()
-		case KeyCtrlC:
-			return m.handleCancelAndExit()
-		case KeyUp:
-			m.handleMoveCursorUp()
-		case KeyDown:
-			m.handleMoveCursorDown()
-		case KeyEnter:
-			m.handleEnterDirectory()
-		case KeyBackspace:
-			m.handleNavigateToParent()
-		case KeySpace:
-			m.handleSelectFile()
-		case KeyCtrlA:
-			m.handleSelectAllFiles()
-		case KeyCtrlHome:
-			m.handleGoToTop()
-		case KeyCtrlEnd:
-			m.handleGoToBottom()
-		case KeyP:
-			return m.handleEnterPathInputMode()
-		case KeySlash:
-			return m.handleEnterFilterMode()
-		}
-	}
-	return nil
-}
-
-func (m *Model) View() string {
-	header := m.renderHeader()
-	footer := m.renderFooter()
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		header,
-		m.viewport.View(),
-		footer,
-	)
-}
-
-func (m *Model) renderPathInput() string {
-	var s strings.Builder
-	prompt := Elements.Text.InputHeader
-	if m.isFilterMode {
-		prompt = Elements.Text.FilterHeader
-	}
-	s.WriteString(prompt)
-	s.WriteString(m.pathInput.View())
-
-	if m.inputErrorMsg != "" {
-		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
-	}
-	s.WriteString("\n")
-	return s.String()
-}
-
-func (m *Model) renderHeader() string {
-	if m.isInputMode || m.isFilterMode {
-		return m.renderPathInput()
+func (m *Model) changeDirectory(newPath string) {
+	newItems, err := loadItems(m.fsys, newPath, m.config)
+	if err != nil {
+		logger.Error("changeDirectory.loadItems", map[string]any{
+			"message": "Failed to load directory items",
+			"path":    newPath,
+			"error":   err.Error(),
+		})
+		return
 	}
 
-	filterIndicator := FormatFilterIndicator(m.filterQuery)
-
-	helpHeader := Elements.Text.HelpHeader
-	pathStyle := lipgloss.NewStyle().Width(m.width)
-	fullPathString := Elements.Text.PathPrefix + m.path + filterIndicator
-	wrappedPath := pathStyle.Render(fullPathString)
-
-	return lipgloss.JoinVertical(lipgloss.Left,
-		helpHeader,
-		wrappedPath,
-	)
-}
-func (m *Model) renderFooter() string {
-	return fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
-}
-
-func (m *Model) getVisibleItems() []item {
-	if m.filterQuery == "" {
-		return m.items
-	}
-
-	var filteredItems []item
-	lowerQuery := strings.ToLower(m.filterQuery)
-	for _, i := range m.items {
-		if strings.Contains(strings.ToLower(i.name), lowerQuery) {
-			filteredItems = append(filteredItems, i)
-		}
-	}
-	return filteredItems
-}
-
-func (m *Model) renderFileList() string {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return m.renderEmptyFileList()
-	}
-
-	var s strings.Builder
-	for i, item := range visibleItems {
-		s.WriteString(m.renderListItem(i, item))
-	}
-	return s.String()
-}
-
-func (m *Model) renderEmptyFileList() string {
-	emptyMessage := Elements.Text.EmptyMessage
-	padding := strings.Repeat("\n", m.viewport.Height/2)
-
-	style := Styles.List.Empty.
-		Width(m.viewport.Width).
-		Align(lipgloss.Center)
-
-	return style.Render(padding + emptyMessage)
-}
-
-func (m *Model) renderListItem(index int, item item) string {
-	var cursorStyle, nameStyle lipgloss.Style
-
-	if m.cursor == index {
-		cursorStyle = Styles.List.Cursor
-		nameStyle = Styles.List.Cursor
-	} else {
-		cursorStyle = Styles.List.Normal
-		nameStyle = Styles.List.Normal
-	}
-
-	fullPath := filepath.Join(m.path, item.name)
-	_, isSelected := m.selected[fullPath]
-
-	if item.isExcluded {
-		nameStyle = Styles.List.Excluded
-	} else if isSelected {
-		nameStyle = Styles.List.Selected
-	}
-
-	cursorStr := Elements.List.CursorEmpty
-	if m.cursor == index {
-		cursorStr = Icons.Cursor
-	}
-
-	var prefix, itemIcon string
-	if item.isExcluded {
-		prefix = Elements.List.UnselectedPrefix
-		itemIcon = Icons.Excluded
-	} else {
-		if isSelected {
-			prefix = Elements.List.SelectedPrefix
-		} else {
-			prefix = Elements.List.UnselectedPrefix
-		}
-		if item.isDir {
-			itemIcon = Icons.Directory
-		} else {
-			itemIcon = Icons.File
-		}
-	}
-
-	itemName := item.name
-	if item.isDir {
-		itemName += Elements.List.DirectorySuffix
-	}
-
-	finalCursor := cursorStyle.Render(cursorStr)
-	finalPrefix := nameStyle.Render(Elements.List.CursorEmpty + prefix + itemIcon + Elements.List.CursorEmpty)
-	finalName := nameStyle.Render(itemName)
-
-	line := lipgloss.JoinHorizontal(lipgloss.Top,
-		finalCursor,
-		finalPrefix,
-		finalName,
-	)
-
-	return line + "\n"
+	m.path = newPath
+	m.items = newItems
+	m.cursor = 0
+	m.filterQuery = ""
+	m.pathInput.Reset()
+	m.viewport.GotoTop()
 }
 
 func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
@@ -346,197 +141,6 @@ func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
 		})
 	}
 	return items, nil
-}
-func (m *Model) changeDirectory(newPath string) {
-	newItems, err := loadItems(m.fsys, newPath, m.config)
-	if err != nil {
-		logger.Error("changeDirectory.loadItems", map[string]any{
-			"message": "Failed to load directory items",
-			"path":    newPath,
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	logger.Debug("changeDirectory", map[string]any{
-		"path":       newPath,
-		"item_count": len(newItems),
-	})
-
-	m.path = newPath
-	m.items = newItems
-	m.cursor = 0
-	m.filterQuery = ""
-	m.pathInput.Reset()
-	m.viewport.GotoTop()
-}
-
-func (m *Model) handleConfirmAndExit() tea.Cmd {
-	return tea.Quit
-}
-
-func (m *Model) handleCancelAndExit() tea.Cmd {
-	m.selected = make(map[string]struct{})
-	return tea.Quit
-}
-
-func (m *Model) handleClearFilter() {
-	if m.filterQuery != "" {
-		m.filterQuery = ""
-		m.clampCursor()
-	}
-}
-
-func (m *Model) handleConfirmPathChange() {
-	newPath := m.pathInput.Value()
-	if strings.HasPrefix(newPath, "~") {
-		home, err := m.fsys.UserHomeDir()
-		if err == nil {
-			newPath = filepath.Join(home, newPath[1:])
-		}
-	}
-
-	absPath, err := m.fsys.Abs(newPath)
-	if err != nil {
-		m.inputErrorMsg = fmt.Sprintf("Invalid path: %v", err)
-		logger.Warn("handleConfirmPathChange.Abs", map[string]any{
-			"message": "Could not get absolute path",
-			"path":    newPath,
-			"error":   err.Error(),
-		})
-		return
-	}
-
-	if _, err := loadItems(m.fsys, absPath, m.config); err != nil {
-		m.inputErrorMsg = fmt.Sprintf("Error reading directory: %v", err)
-	} else {
-		m.changeDirectory(absPath)
-		m.isInputMode = false
-		m.inputErrorMsg = ""
-		m.pathInput.Reset()
-	}
-}
-
-func (m *Model) handleCancelPathChange() {
-	m.isInputMode = false
-	m.inputErrorMsg = ""
-	m.pathInput.Reset()
-}
-
-func (m *Model) handleMoveCursorUp() {
-	if m.cursor > 0 {
-		m.cursor--
-	}
-}
-
-func (m *Model) handleMoveCursorDown() {
-	visibleItems := m.getVisibleItems()
-	if m.cursor < len(visibleItems)-1 {
-		m.cursor++
-	}
-}
-
-func (m *Model) handleEnterDirectory() {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return
-	}
-	currentItem := visibleItems[m.cursor]
-	if currentItem.isDir && !currentItem.isExcluded {
-		m.changeDirectory(filepath.Join(m.path, currentItem.name))
-	}
-}
-
-func (m *Model) handleNavigateToParent() {
-	parentPath := filepath.Dir(m.path)
-	if parentPath != m.path {
-		m.changeDirectory(parentPath)
-	}
-}
-
-func (m *Model) handleSelectFile() {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return
-	}
-	currentItem := visibleItems[m.cursor]
-	if !currentItem.isExcluded {
-		fullPath := filepath.Join(m.path, currentItem.name)
-		if _, ok := m.selected[fullPath]; ok {
-			delete(m.selected, fullPath)
-		} else {
-			m.selected[fullPath] = struct{}{}
-		}
-	}
-}
-
-func (m *Model) handleSelectAllFiles() {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return
-	}
-
-	allSelectableAreSelected := true
-	hasSelectableItems := false
-	for _, item := range visibleItems {
-		if !item.isExcluded {
-			hasSelectableItems = true
-			fullPath := filepath.Join(m.path, item.name)
-			if _, ok := m.selected[fullPath]; !ok {
-				allSelectableAreSelected = false
-				break
-			}
-		}
-	}
-	if !hasSelectableItems {
-		return
-	}
-	if allSelectableAreSelected {
-		for _, item := range visibleItems {
-			if !item.isExcluded {
-				delete(m.selected, filepath.Join(m.path, item.name))
-			}
-		}
-	} else {
-		for _, item := range visibleItems {
-			if !item.isExcluded {
-				m.selected[filepath.Join(m.path, item.name)] = struct{}{}
-			}
-		}
-	}
-}
-
-func (m *Model) handleGoToTop() {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) > 0 {
-		m.cursor = 0
-	}
-}
-
-func (m *Model) handleGoToBottom() {
-	visibleItems := m.getVisibleItems()
-	if len(visibleItems) > 0 {
-		m.cursor = len(visibleItems) - 1
-	}
-}
-
-func (m *Model) handleEnterPathInputMode() tea.Cmd {
-	m.isInputMode = true
-	m.inputErrorMsg = ""
-	m.pathInput.SetValue(m.path + string(filepath.Separator))
-	return m.pathInput.Focus()
-}
-
-func (m *Model) handleEnterFilterMode() tea.Cmd {
-	m.isFilterMode = true
-	m.pathInput.SetValue(m.filterQuery)
-	return m.pathInput.Focus()
-}
-
-func (m *Model) handleCancelFilter() {
-	m.isFilterMode = false
-	m.filterQuery = ""
-	m.pathInput.Reset()
 }
 
 func (m *Model) clampCursor() {
