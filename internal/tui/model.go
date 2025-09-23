@@ -29,6 +29,7 @@ type Model struct {
 	filterQuery           string
 	inputErrorMsg         string
 	viewport              viewport.Model
+	completionViewport    viewport.Model
 	width                 int
 	height                int
 	completionSuggestions []string
@@ -51,16 +52,18 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 	ti.Focus()
 
 	vp := viewport.New(0, 0)
+	completionVP := viewport.New(0, 0)
 
 	m := &Model{
-		path:      path,
-		items:     items,
-		selected:  make(map[string]struct{}),
-		config:    config,
-		fsys:      fsys,
-		pathInput: ti,
-		viewport:  vp,
-		Aborted:   false,
+		path:               path,
+		items:              items,
+		selected:           make(map[string]struct{}),
+		config:             config,
+		fsys:               fsys,
+		pathInput:          ti,
+		viewport:           vp,
+		completionViewport: completionVP,
+		Aborted:            false,
 	}
 
 	m.viewport.SetContent(m.renderFileList())

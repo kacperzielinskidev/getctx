@@ -13,6 +13,8 @@ func (m *Model) View() string {
 	header := m.renderHeader()
 	footer := m.renderFooter()
 
+	m.viewport.SetContent(m.renderFileList())
+
 	var mainContent string
 	if m.isInputMode {
 		mainContent = m.renderCompletionGrid()
@@ -112,7 +114,7 @@ func (m *Model) renderListItem(index int, item item) string {
 	cursorStr := Elements.List.CursorEmpty
 	if m.cursor == index {
 		cursorStr = Icons.Cursor
-		nameStyle = nameStyle.Copy().Bold(true)
+		nameStyle = nameStyle.Bold(true)
 	}
 
 	var prefix, itemIcon string
@@ -142,7 +144,7 @@ func (m *Model) renderListItem(index int, item item) string {
 func (m *Model) renderCompletionGrid() string {
 	suggestions := m.completionSuggestions
 	if len(suggestions) == 0 {
-		return lipgloss.Place(m.width, m.height-lipgloss.Height(m.renderHeader())-lipgloss.Height(m.renderFooter()), lipgloss.Center, lipgloss.Center, Styles.List.Empty.Render(NoMatchesMessage))
+		return lipgloss.Place(m.width, m.completionViewport.Height, lipgloss.Center, lipgloss.Center, Styles.List.Empty.Render(NoMatchesMessage))
 	}
 	sort.Strings(suggestions)
 
@@ -150,7 +152,6 @@ func (m *Model) renderCompletionGrid() string {
 	const padding = 2
 	var bestNumCols = 1
 	var bestColWidths []int
-
 	for numCols := maxCols; numCols >= 1; numCols-- {
 		numRows := (len(suggestions) + numCols - 1) / numCols
 		if numRows == 0 {
@@ -158,9 +159,10 @@ func (m *Model) renderCompletionGrid() string {
 		}
 		colWidths := make([]int, numCols)
 		totalWidth := (numCols - 1) * padding
-		for c := 0; c < numCols; c++ {
+
+		for c := range numCols {
 			maxWidthInCol := 0
-			for r := 0; r < numRows; r++ {
+			for r := range numRows {
 				i := c*numRows + r
 				if i < len(suggestions) {
 					maxWidthInCol = max(maxWidthInCol, len(suggestions[i]))
@@ -169,17 +171,17 @@ func (m *Model) renderCompletionGrid() string {
 			colWidths[c] = maxWidthInCol
 			totalWidth += maxWidthInCol
 		}
+
 		if totalWidth <= m.width {
 			bestNumCols = numCols
 			bestColWidths = colWidths
 			break
 		}
 	}
-
 	var grid strings.Builder
 	numRows := (len(suggestions) + bestNumCols - 1) / bestNumCols
-	for r := 0; r < numRows; r++ {
-		for c := 0; c < bestNumCols; c++ {
+	for r := range numRows {
+		for c := range bestNumCols {
 			i := c*numRows + r
 			if i < len(suggestions) {
 				item := suggestions[i]
@@ -192,5 +194,7 @@ func (m *Model) renderCompletionGrid() string {
 		}
 		grid.WriteString("\n")
 	}
-	return grid.String()
+
+	m.completionViewport.SetContent(grid.String())
+	return m.completionViewport.View()
 }

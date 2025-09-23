@@ -35,44 +35,59 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	footerContent := m.renderFooter()
 	headerHeight := lipgloss.Height(headerContent)
 	footerHeight := lipgloss.Height(footerContent)
-	m.viewport.Width = m.width
-	m.viewport.Height = m.height - headerHeight - footerHeight
+	viewportHeight := m.height - headerHeight - footerHeight
+	m.viewport.Height = viewportHeight
+	m.completionViewport.Height = viewportHeight
 
-	m.viewport.SetContent(m.renderFileList())
+	// FIXED: This line was re-introduced by mistake and is now correctly removed.
+	// The View() function is responsible for setting content.
 	m.ensureCursorVisible()
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
 	oldValue := m.pathInput.Value()
+
+	// FIXED: Handle viewport scrolling by passing the message directly to its Update method.
+	// This replaces the deprecated LineUp/LineDown calls.
+	m.completionViewport, cmd = m.completionViewport.Update(msg)
+	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		// The viewport's Update method above now handles these keys.
+		// We only handle keys that the viewport doesn't.
 		case KeyTab:
 			m.handleAutoComplete()
-			return nil
 		case KeyEnter:
 			m.handleConfirmPathChange()
-			return nil
 		case KeyEscape, KeyCtrlC:
 			m.handleCancelPathChange()
-			return nil
+		default:
+			// For all other keys, update the text input.
+			m.pathInput, cmd = m.pathInput.Update(msg)
+			cmds = append(cmds, cmd)
 		}
+	default:
+		// Handle non-key messages for the text input.
+		m.pathInput, cmd = m.pathInput.Update(msg)
+		cmds = append(cmds, cmd)
 	}
-
-	var cmd tea.Cmd
-	m.pathInput, cmd = m.pathInput.Update(msg)
 
 	if m.pathInput.Value() != oldValue {
 		m.updateCompletions()
 	}
 
-	return cmd
+	return tea.Batch(cmds...)
 }
 
 func (m *Model) updateFilterMode(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -84,7 +99,6 @@ func (m *Model) updateFilterMode(msg tea.Msg) tea.Cmd {
 			return nil
 		}
 	}
-	var cmd tea.Cmd
 	m.pathInput, cmd = m.pathInput.Update(msg)
 	m.filterQuery = m.pathInput.Value()
 	m.clampCursor()
