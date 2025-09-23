@@ -1,6 +1,6 @@
 // internal/app/completion.go
 
-package app
+package tui
 
 import (
 	"path/filepath"

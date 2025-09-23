@@ -1,13 +1,13 @@
-package app
+package tui
 
 import (
 	"fmt"
-	"getctx/internal/logger"
+	"getctx/internal/config"
+	"getctx/internal/fs"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type item struct {
@@ -16,13 +16,14 @@ type item struct {
 	isExcluded bool
 }
 
+// Model holds the state for the TUI. It receives its dependencies.
 type Model struct {
 	path                  string
 	items                 []item
 	cursor                int
 	selected              map[string]struct{}
-	config                *Config
-	fsys                  FileSystem
+	config                *config.Config
+	fsys                  fs.FileSystem
 	pathInput             textinput.Model
 	isInputMode           bool
 	isFilterMode          bool
@@ -32,9 +33,10 @@ type Model struct {
 	width                 int
 	height                int
 	completionSuggestions []string
+	Aborted               bool // Flag to indicate if the user cancelled
 }
 
-func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error) {
+func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Model, error) {
 	path, err := fsys.Abs(startPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get absolute path for '%s': %w", startPath, err)
@@ -46,7 +48,7 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 	}
 
 	ti := textinput.New()
-	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
+	ti.Prompt = Icons.Cursor + " "
 	ti.Focus()
 
 	vp := viewport.New(0, 0)
@@ -60,6 +62,7 @@ func NewModel(startPath string, config *Config, fsys FileSystem) (*Model, error)
 		pathInput:   ti,
 		isInputMode: false,
 		viewport:    vp,
+		Aborted:     false,
 	}
 
 	m.viewport.SetContent(m.renderFileList())
@@ -70,64 +73,19 @@ func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmd tea.Cmd
-	var cmds []tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		inputWidth := max(m.width-len(m.pathInput.Prompt)-1, 1)
-		m.pathInput.Width = inputWidth
+// GetSelectedPaths is a clean way for the orchestrator to retrieve the final state.
+func (m *Model) GetSelectedPaths() []string {
+	paths := make([]string, 0, len(m.selected))
+	for path := range m.selected {
+		paths = append(paths, path)
 	}
-
-	if m.isInputMode {
-		oldValue := m.pathInput.Value()
-
-		cmd, keyWasHandled := m.handleInputModeKeys(msg)
-		cmds = append(cmds, cmd)
-
-		if !keyWasHandled {
-			m.pathInput, cmd = m.pathInput.Update(msg)
-			cmds = append(cmds, cmd)
-		}
-
-		if m.pathInput.Value() != oldValue {
-			m.updateCompletions()
-		}
-
-	} else if m.isFilterMode {
-		m.pathInput, cmd = m.pathInput.Update(msg)
-		cmds = append(cmds, cmd)
-
-		cmd = m.updateFilterMode(msg)
-		cmds = append(cmds, cmd)
-	} else {
-		cmd = m.updateNormalMode(msg)
-		cmds = append(cmds, cmd)
-	}
-
-	headerContent := m.renderHeader()
-	footerContent := m.renderFooter()
-	headerHeight := lipgloss.Height(headerContent)
-	footerHeight := lipgloss.Height(footerContent)
-	m.viewport.Width = m.width
-	m.viewport.Height = m.height - headerHeight - footerHeight
-	m.viewport.SetContent(m.renderFileList())
-	m.ensureCursorVisible()
-
-	return m, tea.Batch(cmds...)
+	return paths
 }
 
 func (m *Model) changeDirectory(newPath string) {
 	newItems, err := loadItems(m.fsys, newPath, m.config)
 	if err != nil {
-		logger.Error("changeDirectory.loadItems", map[string]any{
-			"message": "Failed to load directory items",
-			"path":    newPath,
-			"error":   err.Error(),
-		})
+		// In a real app, you might want to show this error in the UI.
 		return
 	}
 
@@ -139,7 +97,7 @@ func (m *Model) changeDirectory(newPath string) {
 	m.viewport.GotoTop()
 }
 
-func loadItems(fsys FileSystem, path string, config *Config) ([]item, error) {
+func loadItems(fsys fs.FileSystem, path string, config *config.Config) ([]item, error) {
 	dirEntries, err := fsys.ReadDir(path)
 	if err != nil {
 		return nil, err

@@ -3,42 +3,40 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
-	"getctx/internal/app"
+	"getctx/internal/core"
 	"getctx/internal/logger"
+	"os"
 )
 
 func main() {
-	debug := flag.Bool("debug", false, "Enable debug logging to debug.log")
-	outputFilename := flag.String("o", "context.txt", "The name of the output file")
+	// Initialize the logger first.
+	logFile, err := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "FATAL: could not open log file: %v\n", err)
+		os.Exit(1)
+	}
+	defer logFile.Close()
+
+	// Create a logger instance instead of using a global one.
+	log := logger.New(logFile, logger.LevelDebug)
+	log.Info("main", "Logger initialized successfully.")
+
+	// --- Flag Parsing ---
+	outputFilename := flag.String("o", "context.txt", "The name of the output file.")
 	flag.Parse()
 
-	debugEnv := os.Getenv("GETCTX_DEBUG")
-	enableLogging := *debug || debugEnv == "true" || debugEnv == "1"
-
-	if enableLogging {
-		logFile, err := logger.InitGlobalLogger("debug.log")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "CRITICAL: Failed to initialize logger: %v\n", err)
-		} else {
-			defer logFile.Close()
-		}
+	startPath := "."
+	if len(flag.Args()) > 0 {
+		startPath = flag.Args()[0]
 	}
 
-	application, err := app.NewApp(*outputFilename, flag.Args())
-	if err != nil {
-		logger.Error("main.NewApp", err)
-		fmt.Fprintf(os.Stderr, "Initialization error: %v\n", err)
+	// Create the core App, injecting the logger and other dependencies.
+	app := core.NewApp(log, *outputFilename, startPath)
+
+	// Run the application.
+	if err := app.Run(); err != nil {
+		log.Error("main.app.Run", err)
+		fmt.Fprintf(os.Stderr, "An error occurred: %v\n", err)
 		os.Exit(1)
 	}
-
-	if err := application.Run(); err != nil {
-		logger.Error("main.Run", err)
-		fmt.Fprintf(os.Stderr, "Runtime error: %v\n", err)
-		os.Exit(1)
-	}
-
-	logger.Info("main", "Application finished successfully.")
-
 }

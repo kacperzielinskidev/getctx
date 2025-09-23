@@ -3,7 +3,6 @@ package logger
 import (
 	"encoding/json"
 	"io"
-	"os"
 	"sync"
 	"time"
 )
@@ -32,6 +31,7 @@ func (l Level) String() string {
 	}
 }
 
+// Logger remains the same, but without any global singleton.
 type Logger struct {
 	out      io.Writer
 	minLevel Level
@@ -91,47 +91,4 @@ func (l *Logger) Warn(name string, data any) {
 
 func (l *Logger) Error(name string, data any) {
 	l.log(LevelError, name, data)
-}
-
-var globalLogger *Logger
-
-func InitGlobalLogger(filename string) (*os.File, error) {
-
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return nil, err
-	}
-
-	globalLogger = New(file, LevelDebug)
-	globalLogger.Info("InitGlobalLogger", "Logger initialized successfully.")
-
-	return file, nil
-}
-
-func Debug(name string, data any) {
-	if globalLogger == nil {
-		return
-	}
-	globalLogger.Debug(name, data)
-}
-
-func Info(name string, data any) {
-	if globalLogger == nil {
-		return
-	}
-	globalLogger.Info(name, data)
-}
-
-func Warn(name string, data any) {
-	if globalLogger == nil {
-		return
-	}
-	globalLogger.Warn(name, data)
-}
-
-func Error(name string, data any) {
-	if globalLogger == nil {
-		return
-	}
-	globalLogger.Error(name, data)
 }
