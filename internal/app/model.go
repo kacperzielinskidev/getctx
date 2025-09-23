@@ -83,38 +83,31 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.isInputMode {
-		// --- POCZĄTEK KOREKTY LOGIKI ---
 		oldValue := m.pathInput.Value()
 
-		// Najpierw obsługujemy nasze specjalne skróty klawiszowe (TAB, Enter, ESC).
-		// Funkcja zwróci `true`, jeśli klawisz został obsłużony.
 		cmd, keyWasHandled := m.handleInputModeKeys(msg)
 		cmds = append(cmds, cmd)
 
-		// Jeśli klawisz NIE był specjalnym skrótem, przekazujemy go do pola tekstowego,
-		// aby mogło ono dodać literę do swojej wartości.
 		if !keyWasHandled {
 			m.pathInput, cmd = m.pathInput.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
-		// Po wszystkich operacjach sprawdzamy, czy tekst w polu się zmienił.
 		if m.pathInput.Value() != oldValue {
-			// Jeśli tak, natychmiast odświeżamy listę sugestii.
 			m.updateCompletions()
 		}
-		// --- KONIEC KOREKTY LOGIKI ---
 
 	} else if m.isFilterMode {
 		m.pathInput, cmd = m.pathInput.Update(msg)
 		cmds = append(cmds, cmd)
+
 		cmd = m.updateFilterMode(msg)
+		cmds = append(cmds, cmd)
 	} else {
 		cmd = m.updateNormalMode(msg)
 		cmds = append(cmds, cmd)
 	}
 
-	// Reszta funkcji pozostaje bez zmian
 	headerContent := m.renderHeader()
 	footerContent := m.renderFooter()
 	headerHeight := lipgloss.Height(headerContent)

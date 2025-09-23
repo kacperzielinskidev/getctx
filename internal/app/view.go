@@ -160,14 +160,16 @@ func (m *Model) renderListItem(index int, item item) string {
 func (m *Model) renderCompletionGrid() string {
 	suggestions := m.completionSuggestions
 	if len(suggestions) == 0 {
-		emptyMessage := Elements.Text.NoMatchesMessage
-		availableHeight := m.height - lipgloss.Height(m.renderHeader()) - lipgloss.Height(m.renderFooter())
-		padding := strings.Repeat("\n", availableHeight/2)
+		availableHeight := max(0, m.height-lipgloss.Height(m.renderHeader())-lipgloss.Height(m.renderFooter()))
+		message := Styles.List.Empty.Render(Elements.Text.NoMatchesMessage)
 
-		style := Styles.List.Empty.Width(m.width).Align(lipgloss.Center)
-
-		return style.Render(padding + emptyMessage)
-
+		return lipgloss.Place(
+			m.width,
+			availableHeight,
+			lipgloss.Center,
+			lipgloss.Center,
+			message,
+		)
 	}
 
 	sort.Strings(suggestions)
@@ -189,51 +191,40 @@ func (m *Model) renderCompletionGrid() string {
 		colWidths := make([]int, numCols)
 		totalWidth := 0
 
-		// Obliczamy maksymalną szerokość dla każdej kolumny indywidualnie.
-		for c := 0; c < numCols; c++ {
+		for c := range numCols {
 			maxWidthInCol := 0
-			// Układ "ls" wypełnia najpierw kolumny, potem wiersze.
-			for r := 0; r < numRows; r++ {
+			for r := range numRows {
 				index := c*numRows + r
 				if index < len(suggestions) {
-					if len(suggestions[index]) > maxWidthInCol {
-						maxWidthInCol = len(suggestions[index])
-					}
+					maxWidthInCol = max(maxWidthInCol, len(suggestions[index]))
 				}
 			}
 			colWidths[c] = maxWidthInCol
 		}
 
-		// Sumujemy szerokości wszystkich kolumn oraz padding między nimi.
 		totalWidth = (numCols - 1) * padding
 		for _, w := range colWidths {
 			totalWidth += w
 		}
 
-		// Jeśli ten układ mieści się na ekranie, znaleźliśmy optymalne rozwiązanie.
 		if totalWidth <= m.width {
 			bestNumCols = numCols
 			bestColWidths = colWidths
 			break
 		}
 	}
-	// Jeśli nawet układ jednokolumnowy się nie mieści (bardzo długa nazwa pliku),
-	// to i tak pozostanie on jednokolumnowy, co jest poprawnym zachowaniem.
 
-	// Renderujemy siatkę, używając obliczonego optymalnego układu.
 	var grid strings.Builder
 	numRows := (len(suggestions) + bestNumCols - 1) / bestNumCols
 
-	for r := 0; r < numRows; r++ {
-		for c := 0; c < bestNumCols; c++ {
+	for r := range numRows {
+		for c := range bestNumCols {
 			index := c*numRows + r
 			if index < len(suggestions) {
 				item := suggestions[index]
 				grid.WriteString(item)
 
-				// Dodajemy padding tylko wtedy, gdy to nie jest ostatnia kolumna.
 				if c < bestNumCols-1 {
-					// Obliczamy padding potrzebny do wyrównania do następnej kolumny.
 					padCount := bestColWidths[c] - len(item) + padding
 					grid.WriteString(strings.Repeat(" ", padCount))
 				}
