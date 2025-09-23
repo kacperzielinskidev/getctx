@@ -90,7 +90,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = append(cmds, cmd)
 		cmd = m.updateFilterMode(msg)
 	} else {
-		m.viewport, cmd = m.viewport.Update(msg)
 		cmds = append(cmds, cmd)
 		cmd = m.updateNormalMode(msg)
 	}
