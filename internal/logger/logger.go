@@ -31,7 +31,6 @@ func (l Level) String() string {
 	}
 }
 
-// Logger remains the same, but without any global singleton.
 type Logger struct {
 	out      io.Writer
 	minLevel Level

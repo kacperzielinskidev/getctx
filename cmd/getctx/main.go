@@ -9,7 +9,11 @@ import (
 )
 
 func main() {
-	// Initialize the logger first.
+	outputFilename := flag.String("o", "context.txt", "The name of the output file.")
+	debug := flag.Bool("debug", false, "Enable debug level logging.")
+
+	flag.Parse()
+
 	logFile, err := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "FATAL: could not open log file: %v\n", err)
@@ -17,23 +21,23 @@ func main() {
 	}
 	defer logFile.Close()
 
-	// Create a logger instance instead of using a global one.
-	log := logger.New(logFile, logger.LevelDebug)
-	log.Info("main", "Logger initialized successfully.")
+	logLevel := logger.LevelInfo
+	if *debug {
+		logLevel = logger.LevelDebug
+	}
 
-	// --- Flag Parsing ---
-	outputFilename := flag.String("o", "context.txt", "The name of the output file.")
-	flag.Parse()
+	log := logger.New(logFile, logLevel)
+	log.Info("main", "Logger initialized successfully.")
+	if *debug {
+		log.Debug("main", "Debug logging is enabled.")
+	}
 
 	startPath := "."
 	if len(flag.Args()) > 0 {
 		startPath = flag.Args()[0]
 	}
 
-	// Create the core App, injecting the logger and other dependencies.
 	app := core.NewApp(log, *outputFilename, startPath)
-
-	// Run the application.
 	if err := app.Run(); err != nil {
 		log.Error("main.app.Run", err)
 		fmt.Fprintf(os.Stderr, "An error occurred: %v\n", err)

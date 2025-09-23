@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 )
 
-// OSFileSystem is the concrete implementation using the standard 'os' package.
 type OSFileSystem struct{}
 
 func NewOSFileSystem() *OSFileSystem {

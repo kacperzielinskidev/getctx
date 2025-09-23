@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-// DiscoverFiles recursively finds all eligible files from a list of starting paths.
 func DiscoverFiles(fsys FileSystem, paths []string, excludedNames map[string]struct{}) ([]string, []string, error) {
 	var discoveredPaths []string
 	var warnings []string
@@ -54,7 +53,6 @@ func DiscoverFiles(fsys FileSystem, paths []string, excludedNames map[string]str
 	return discoveredPaths, warnings, nil
 }
 
-// IsTextFile detects if a file is text-based by checking its content type.
 func IsTextFile(fsys FileSystem, path string) (bool, error) {
 	file, err := fsys.Open(path)
 	if err != nil {

@@ -7,7 +7,6 @@ type Config struct {
 	ExcludedExtensions map[string]struct{}
 }
 
-// ... (rest of the file is identical to the original)
 func NewConfig() *Config {
 	return &Config{
 		ExcludedNames: map[string]struct{}{
