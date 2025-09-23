@@ -2,12 +2,14 @@ package tui
 
 import (
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 func (m *Model) getCompletionParts(input string) (dir, prefix string) {
 	path := input
 
+	// 1. Obsługa katalogu domowego (bez zmian)
 	if strings.HasPrefix(path, "~") {
 		home, err := m.fsys.UserHomeDir()
 		if err == nil {
@@ -15,16 +17,33 @@ func (m *Model) getCompletionParts(input string) (dir, prefix string) {
 		}
 	}
 
-	if !filepath.IsAbs(path) {
-		path = filepath.Join(m.path, path)
-	}
-	if strings.HasSuffix(path, string(filepath.Separator)) {
-		return path, ""
+	var analysisPath string
+
+	// 2. KLUCZOWA POPRAWKA LOGIKI
+	if filepath.IsAbs(path) {
+		// Ścieżka jest już absolutna (np. C:\Users, /home/user). Użyj jej.
+		analysisPath = path
+	} else if runtime.GOOS == "windows" && (path == `\` || path == `/`) {
+		// --- TO JEST SERCE POPRAWKI DLA WINDOWS ---
+		// Jeśli użytkownik wpisał sam separator, jego intencją jest
+		// przejście do roota dysku, na którym aktualnie się znajduje w TUI.
+		// Wyciągamy nazwę woluminu z `m.path` (np. "C:") i dodajemy separator.
+		analysisPath = filepath.VolumeName(m.path) + string(filepath.Separator)
+	} else {
+		// W każdym innym przypadku jest to ścieżka względna.
+		// Łączymy ją z bieżącym katalogiem w TUI.
+		analysisPath = filepath.Join(m.path, path)
 	}
 
-	dir = filepath.Dir(path)
-	prefix = filepath.Base(path)
-	return dir, prefix
+	// 3. Ustalenie katalogu do przeszukania i prefiksu (bez zmian)
+	if strings.HasSuffix(input, string(filepath.Separator)) {
+		return filepath.Clean(analysisPath), ""
+	}
+
+	dir = filepath.Dir(analysisPath)
+	prefix = filepath.Base(analysisPath)
+
+	return filepath.Clean(dir), prefix
 }
 
 func (m *Model) getCompletions(dir, prefix string) ([]string, error) {
