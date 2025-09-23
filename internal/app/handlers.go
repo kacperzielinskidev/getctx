@@ -241,9 +241,8 @@ func (m *Model) handleEnterPathInputMode() tea.Cmd {
 	}
 
 	m.pathInput.SetValue(pathValue)
-	m.pathInput.SetCursor(len(pathValue)) // Ustaw kursor na końcu
+	m.pathInput.SetCursor(len(pathValue))
 
-	// KLUCZOWA ZMIANA: Natychmiast generuj sugestie dla bieżącej ścieżki.
 	m.updateCompletions()
 
 	return m.pathInput.Focus()
@@ -258,58 +257,6 @@ func (m *Model) handleCancelFilter() {
 	m.isFilterMode = false
 	m.filterQuery = ""
 	m.pathInput.Reset()
-}
-
-func (m *Model) handleTabCompletion() {
-	currentInput := m.pathInput.Value()
-	dirToSearch, prefix := m.getCompletionParts(currentInput)
-
-	// 1. Pobierz sugestie dla aktualnie wpisanego tekstu.
-	initialSuggestions, err := m.getCompletions(dirToSearch, prefix)
-	if err != nil || len(initialSuggestions) == 0 {
-		m.completionSuggestions = nil // Brak sugestii, wyczyść widok siatki.
-		return
-	}
-
-	// 2. Ustal, jaka będzie nowa, uzupełniona wartość pola tekstowego.
-	var newInputValue string
-	if len(initialSuggestions) == 1 {
-		// Scenariusz A: Tylko jedna możliwość. Uzupełnij ją w całości.
-		newInputValue = filepath.Join(dirToSearch, initialSuggestions[0])
-	} else {
-		// Scenariusz B: Wiele możliwości. Znajdź najdłuższy wspólny prefiks.
-		commonPrefix := findLongestCommonPrefix(initialSuggestions)
-		if commonPrefix == "" {
-			// Jeśli nie ma wspólnego prefiksu, tylko pokaż listę i nie zmieniaj tekstu.
-			m.completionSuggestions = initialSuggestions
-			return
-		}
-		newInputValue = filepath.Join(dirToSearch, commonPrefix)
-	}
-
-	// 3. Sprawdź, czy nowo uzupełniona ścieżka jest katalogiem.
-	info, err := m.fsys.Stat(newInputValue)
-	isDir := err == nil && info.IsDir()
-
-	// 4. Zaktualizuj pole tekstowe i zdecyduj, jaka lista sugestii ma się pojawić.
-	m.pathInput.SetValue(newInputValue)
-	m.pathInput.SetCursor(len(newInputValue))
-
-	if isDir {
-		// To jest katalog! Upewnij się, że ma ukośnik na końcu...
-		if !strings.HasSuffix(newInputValue, string(filepath.Separator)) {
-			newInputValue += string(filepath.Separator)
-			m.pathInput.SetValue(newInputValue) // Zaktualizuj ponownie, by dodać ukośnik
-			m.pathInput.SetCursor(len(newInputValue))
-		}
-		// ...a następnie NATYCHMIAST pobierz i wyświetl jego zawartość.
-		finalSuggestions, _ := m.getCompletions(newInputValue, "")
-		m.completionSuggestions = finalSuggestions
-	} else {
-		// To nie jest katalog (np. plik lub częściowy prefiks).
-		// Pokaż oryginalną listę sugestii, która doprowadziła do uzupełnienia.
-		m.completionSuggestions = initialSuggestions
-	}
 }
 
 func (m *Model) updateCompletions() {
@@ -328,7 +275,6 @@ func (m *Model) updateCompletions() {
 	m.completionSuggestions = suggestions
 }
 
-// handleAutoComplete jest wywoływana przez TAB i uzupełnia tekst na podstawie widocznych sugestii.
 func (m *Model) handleAutoComplete() {
 	if len(m.completionSuggestions) == 0 {
 		return
