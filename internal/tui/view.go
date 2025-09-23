@@ -1,4 +1,4 @@
-package app
+package tui
 
 import (
 	"fmt"
@@ -31,7 +31,6 @@ func (m *Model) getVisibleItems() []item {
 	if m.filterQuery == "" {
 		return m.items
 	}
-
 	var filteredItems []item
 	lowerQuery := strings.ToLower(m.filterQuery)
 	for _, i := range m.items {
@@ -44,9 +43,9 @@ func (m *Model) getVisibleItems() []item {
 
 func (m *Model) renderPathInput() string {
 	var s strings.Builder
-	prompt := Elements.Text.InputHeader
+	prompt := InputHeader
 	if m.isFilterMode {
-		prompt = Elements.Text.FilterHeader
+		prompt = FilterHeader
 	}
 	s.WriteString(prompt)
 	s.WriteString(m.pathInput.View())
@@ -64,26 +63,30 @@ func (m *Model) renderHeader() string {
 	}
 
 	filterIndicator := formatFilterIndicator(m.filterQuery)
-
-	helpHeader := Elements.Text.HelpHeader
 	pathStyle := lipgloss.NewStyle().Width(m.width)
-	fullPathString := Elements.Text.PathPrefix + m.path + filterIndicator
+	fullPathString := PathPrefix + m.path + filterIndicator
 	wrappedPath := pathStyle.Render(fullPathString)
 
 	return lipgloss.JoinVertical(lipgloss.Left,
-		helpHeader,
+		HelpHeader,
 		wrappedPath,
 	)
 }
 
 func (m *Model) renderFooter() string {
-	return fmt.Sprintf(Elements.Text.StatusFooter, len(m.selected))
+	return fmt.Sprintf(StatusFooterFormat, len(m.selected))
 }
 
 func (m *Model) renderFileList() string {
 	visibleItems := m.getVisibleItems()
 	if len(visibleItems) == 0 {
-		return m.renderEmptyFileList()
+		message := EmptyMessage
+		if m.filterQuery != "" {
+			message = NoMatchesMessage
+		}
+		padding := strings.Repeat("\n", m.viewport.Height/2)
+		style := Styles.List.Empty.Width(m.viewport.Width).Align(lipgloss.Center)
+		return style.Render(padding + message)
 	}
 
 	var s strings.Builder
@@ -93,25 +96,8 @@ func (m *Model) renderFileList() string {
 	return s.String()
 }
 
-func (m *Model) renderEmptyFileList() string {
-	emptyMessage := Elements.Text.EmptyMessage
-	padding := strings.Repeat("\n", m.viewport.Height/2)
-
-	style := Styles.List.Empty.Width(m.viewport.Width).Align(lipgloss.Center)
-
-	return style.Render(padding + emptyMessage)
-}
-
 func (m *Model) renderListItem(index int, item item) string {
-	var cursorStyle, nameStyle lipgloss.Style
-	if m.cursor == index {
-		cursorStyle = Styles.List.Cursor
-		nameStyle = Styles.List.Cursor
-	} else {
-		cursorStyle = Styles.List.Normal
-		nameStyle = Styles.List.Normal
-	}
-
+	var nameStyle lipgloss.Style
 	fullPath := filepath.Join(m.path, item.name)
 	_, isSelected := m.selected[fullPath]
 
@@ -119,11 +105,14 @@ func (m *Model) renderListItem(index int, item item) string {
 		nameStyle = Styles.List.Excluded
 	} else if isSelected {
 		nameStyle = Styles.List.Selected
+	} else {
+		nameStyle = Styles.List.Normal
 	}
 
 	cursorStr := Elements.List.CursorEmpty
 	if m.cursor == index {
 		cursorStr = Icons.Cursor
+		nameStyle = nameStyle.Copy().Bold(true)
 	}
 
 	var prefix, itemIcon string
@@ -131,15 +120,13 @@ func (m *Model) renderListItem(index int, item item) string {
 		prefix = Elements.List.UnselectedPrefix
 		itemIcon = Icons.Excluded
 	} else {
+		prefix = Elements.List.UnselectedPrefix
 		if isSelected {
 			prefix = Elements.List.SelectedPrefix
-		} else {
-			prefix = Elements.List.UnselectedPrefix
 		}
+		itemIcon = Icons.File
 		if item.isDir {
 			itemIcon = Icons.Directory
-		} else {
-			itemIcon = Icons.File
 		}
 	}
 
@@ -148,65 +135,40 @@ func (m *Model) renderListItem(index int, item item) string {
 		itemName += Elements.List.DirectorySuffix
 	}
 
-	finalCursor := cursorStyle.Render(cursorStr)
-	finalPrefix := nameStyle.Render(Elements.List.CursorEmpty + prefix + itemIcon + Elements.List.CursorEmpty)
-	finalName := nameStyle.Render(itemName)
-
-	line := lipgloss.JoinHorizontal(lipgloss.Top, finalCursor, finalPrefix, finalName)
-
-	return line + "\n"
+	finalLine := fmt.Sprintf("%s %s%s %s", cursorStr, prefix, itemIcon, itemName)
+	return nameStyle.Render(finalLine) + "\n"
 }
 
 func (m *Model) renderCompletionGrid() string {
 	suggestions := m.completionSuggestions
 	if len(suggestions) == 0 {
-		availableHeight := max(0, m.height-lipgloss.Height(m.renderHeader())-lipgloss.Height(m.renderFooter()))
-		message := Styles.List.Empty.Render(Elements.Text.NoMatchesMessage)
-
-		return lipgloss.Place(
-			m.width,
-			availableHeight,
-			lipgloss.Center,
-			lipgloss.Center,
-			message,
-		)
+		return lipgloss.Place(m.width, m.height-lipgloss.Height(m.renderHeader())-lipgloss.Height(m.renderFooter()), lipgloss.Center, lipgloss.Center, Styles.List.Empty.Render(NoMatchesMessage))
 	}
-
 	sort.Strings(suggestions)
 
 	const maxCols = 7
 	const padding = 2
-
-	var (
-		bestNumCols   = 1
-		bestColWidths []int
-	)
+	var bestNumCols = 1
+	var bestColWidths []int
 
 	for numCols := maxCols; numCols >= 1; numCols-- {
 		numRows := (len(suggestions) + numCols - 1) / numCols
 		if numRows == 0 {
 			continue
 		}
-
 		colWidths := make([]int, numCols)
-		totalWidth := 0
-
-		for c := range numCols {
+		totalWidth := (numCols - 1) * padding
+		for c := 0; c < numCols; c++ {
 			maxWidthInCol := 0
-			for r := range numRows {
-				index := c*numRows + r
-				if index < len(suggestions) {
-					maxWidthInCol = max(maxWidthInCol, len(suggestions[index]))
+			for r := 0; r < numRows; r++ {
+				i := c*numRows + r
+				if i < len(suggestions) {
+					maxWidthInCol = max(maxWidthInCol, len(suggestions[i]))
 				}
 			}
 			colWidths[c] = maxWidthInCol
+			totalWidth += maxWidthInCol
 		}
-
-		totalWidth = (numCols - 1) * padding
-		for _, w := range colWidths {
-			totalWidth += w
-		}
-
 		if totalWidth <= m.width {
 			bestNumCols = numCols
 			bestColWidths = colWidths
@@ -216,14 +178,12 @@ func (m *Model) renderCompletionGrid() string {
 
 	var grid strings.Builder
 	numRows := (len(suggestions) + bestNumCols - 1) / bestNumCols
-
-	for r := range numRows {
-		for c := range bestNumCols {
-			index := c*numRows + r
-			if index < len(suggestions) {
-				item := suggestions[index]
+	for r := 0; r < numRows; r++ {
+		for c := 0; c < bestNumCols; c++ {
+			i := c*numRows + r
+			if i < len(suggestions) {
+				item := suggestions[i]
 				grid.WriteString(item)
-
 				if c < bestNumCols-1 {
 					padCount := bestColWidths[c] - len(item) + padding
 					grid.WriteString(strings.Repeat(" ", padCount))
@@ -232,8 +192,5 @@ func (m *Model) renderCompletionGrid() string {
 		}
 		grid.WriteString("\n")
 	}
-
-	return lipgloss.NewStyle().
-		Height(m.height - lipgloss.Height(m.renderHeader()) - lipgloss.Height(m.renderFooter())).
-		Render(grid.String())
+	return grid.String()
 }

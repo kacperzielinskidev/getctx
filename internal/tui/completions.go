@@ -1,5 +1,3 @@
-// internal/app/completion.go
-
 package tui
 
 import (
@@ -41,7 +39,7 @@ func (m *Model) getCompletions(dir, prefix string) ([]string, error) {
 		if strings.HasPrefix(entry.Name(), prefix) {
 			name := entry.Name()
 			if entry.IsDir() {
-				name += string(filepath.Separator) // Dodaj '/' do katalogów
+				name += string(filepath.Separator)
 			}
 			matches = append(matches, name)
 		}

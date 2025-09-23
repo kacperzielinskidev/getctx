@@ -16,7 +16,6 @@ type item struct {
 	isExcluded bool
 }
 
-// Model holds the state for the TUI. It receives its dependencies.
 type Model struct {
 	path                  string
 	items                 []item
@@ -33,7 +32,7 @@ type Model struct {
 	width                 int
 	height                int
 	completionSuggestions []string
-	Aborted               bool // Flag to indicate if the user cancelled
+	Aborted               bool
 }
 
 func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Model, error) {
@@ -54,15 +53,14 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 	vp := viewport.New(0, 0)
 
 	m := &Model{
-		path:        path,
-		items:       items,
-		selected:    make(map[string]struct{}),
-		config:      config,
-		fsys:        fsys,
-		pathInput:   ti,
-		isInputMode: false,
-		viewport:    vp,
-		Aborted:     false,
+		path:      path,
+		items:     items,
+		selected:  make(map[string]struct{}),
+		config:    config,
+		fsys:      fsys,
+		pathInput: ti,
+		viewport:  vp,
+		Aborted:   false,
 	}
 
 	m.viewport.SetContent(m.renderFileList())
@@ -73,7 +71,6 @@ func (m *Model) Init() tea.Cmd {
 	return nil
 }
 
-// GetSelectedPaths is a clean way for the orchestrator to retrieve the final state.
 func (m *Model) GetSelectedPaths() []string {
 	paths := make([]string, 0, len(m.selected))
 	for path := range m.selected {
@@ -85,7 +82,7 @@ func (m *Model) GetSelectedPaths() []string {
 func (m *Model) changeDirectory(newPath string) {
 	newItems, err := loadItems(m.fsys, newPath, m.config)
 	if err != nil {
-		// In a real app, you might want to show this error in the UI.
+		m.inputErrorMsg = "Error reading directory: " + err.Error()
 		return
 	}
 
@@ -119,4 +116,11 @@ func (m *Model) clampCursor() {
 	if m.cursor > maxCursor {
 		m.cursor = maxCursor
 	}
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }

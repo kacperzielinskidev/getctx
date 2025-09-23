@@ -13,11 +13,6 @@ const (
 )
 
 type TUIIcons struct {
-	Building  string
-	Done      string
-	Warning   string
-	Info      string
-	Error     string
 	Directory string
 	File      string
 	Checkmark string
@@ -32,20 +27,8 @@ type TUIListElements struct {
 	DirectorySuffix  string
 }
 
-type TUITextElements struct {
-	HelpHeader       string
-	InputHeader      string
-	FilterHeader     string
-	FilterIndicator  string
-	PathPrefix       string
-	StatusFooter     string
-	EmptyMessage     string
-	NoMatchesMessage string
-}
-
 type TUIElements struct {
 	List TUIListElements
-	Text TUITextElements
 }
 
 type TUIColors struct {
@@ -63,8 +46,7 @@ type TUIListStyles struct {
 }
 
 type TUILogStyles struct {
-	Skipped lipgloss.Style
-	Error   lipgloss.Style
+	Error lipgloss.Style
 }
 
 type TUIStyles struct {
@@ -72,32 +54,21 @@ type TUIStyles struct {
 	Log  TUILogStyles
 }
 
-type TUITexts struct {
-	HelpHeaderBase        string
-	HelpHeaderHint        string
-	InputHeaderBase       string
-	InputHeaderHint       string
-	FilterHeaderBase      string
-	FilterHeaderHint      string
-	FilterIndicatorFormat string
-	PathPrefix            string
-	StatusFooter          string
-	EmptyMessage          string
-	NoMatchesMessage      string
-}
-
 var Icons TUIIcons
 var Elements TUIElements
 var Colors TUIColors
 var Styles TUIStyles
+var HelpHeader string
+var InputHeader string
+var FilterHeader string
+var FilterIndicatorFormat string
+var PathPrefix string
+var StatusFooterFormat string
+var EmptyMessage string
+var NoMatchesMessage string
 
 func init() {
 	Icons = TUIIcons{
-		Building:  "🚀",
-		Done:      "✅",
-		Warning:   "⚠️",
-		Info:      "ℹ️",
-		Error:     "❌",
 		Directory: "📁",
 		File:      "📄",
 		Checkmark: "✔",
@@ -120,23 +91,8 @@ func init() {
 			Empty:    lipgloss.NewStyle().Faint(true),
 		},
 		Log: TUILogStyles{
-			Skipped: lipgloss.NewStyle().Foreground(Colors.Red),
-			Error:   lipgloss.NewStyle().Foreground(Colors.Red).Bold(true),
+			Error: lipgloss.NewStyle().Foreground(Colors.Red).Bold(true),
 		},
-	}
-
-	texts := TUITexts{
-		HelpHeaderBase:        "Select files ",
-		HelpHeaderHint:        "(SPACE: Select File, CTRL+HOME: Go to Top, CTRL+END: Go to Bottom, CTRL+P: Find Path, Q: Save, ESCAPE: Remove Filter)",
-		InputHeaderBase:       "Enter path ",
-		InputHeaderHint:       "(ENTER: Confirm, ESCAPE: Cancel, CTRL+W: Remove whole line)",
-		FilterHeaderBase:      "Filter ",
-		FilterHeaderHint:      "(Type to filter, ENTER: Confirm, ESCAPE: Cancel)",
-		FilterIndicatorFormat: " [Filtering by: \"%s\"]",
-		PathPrefix:            "Current path: ",
-		StatusFooter:          "\nSelected %d items. Press 'q' to save and exit.",
-		EmptyMessage:          "[ This directory is empty ]",
-		NoMatchesMessage:      "[ No matching files or directories found ]",
 	}
 
 	Elements = TUIElements{
@@ -146,34 +102,35 @@ func init() {
 			UnselectedPrefix: "  ",
 			DirectorySuffix:  "/",
 		},
-		Text: TUITextElements{
-			HelpHeader: lipgloss.JoinHorizontal(lipgloss.Left,
-				texts.HelpHeaderBase,
-				Styles.List.Hint.Render(texts.HelpHeaderHint),
-			) + "\n",
-			InputHeader: lipgloss.JoinHorizontal(lipgloss.Left,
-				texts.InputHeaderBase,
-				Styles.List.Hint.Render(texts.InputHeaderHint),
-			) + "\n",
-			FilterHeader: lipgloss.JoinHorizontal(lipgloss.Left,
-				texts.FilterHeaderBase,
-				Styles.List.Hint.Render(texts.FilterHeaderHint),
-			) + "\n",
-			FilterIndicator:  texts.FilterIndicatorFormat,
-			PathPrefix:       texts.PathPrefix,
-			StatusFooter:     texts.StatusFooter,
-			EmptyMessage:     texts.EmptyMessage,
-			NoMatchesMessage: texts.NoMatchesMessage,
-		},
 	}
 
+	HelpHeader = lipgloss.JoinHorizontal(lipgloss.Left,
+		"Select files ",
+		Styles.List.Hint.Render("(space: select, a: select all, ctrl+p: find path, /: filter, q: save, ctrl+c: quit)"),
+	) + "\n"
+
+	InputHeader = lipgloss.JoinHorizontal(lipgloss.Left,
+		"Enter path ",
+		Styles.List.Hint.Render("(enter: confirm, esc: cancel, tab: autocomplete)"),
+	) + "\n"
+
+	FilterHeader = lipgloss.JoinHorizontal(lipgloss.Left,
+		"Filter ",
+		Styles.List.Hint.Render("(type to filter, enter: confirm, esc: cancel)"),
+	) + "\n"
+
+	FilterIndicatorFormat = " [Filtering by: \"%s\"]"
+	PathPrefix = "Current path: "
+	StatusFooterFormat = "\nSelected %d items. Press 'q' to save and exit."
+	EmptyMessage = "[ This directory is empty ]"
+	NoMatchesMessage = "[ No matching files or directories found ]"
 }
 
 func formatFilterIndicator(query string) string {
 	if query == "" {
 		return ""
 	}
-	indicator := fmt.Sprintf(Elements.Text.FilterIndicator, query)
+	indicator := fmt.Sprintf(FilterIndicatorFormat, query)
 	return Styles.List.Hint.Render(indicator)
 }
 

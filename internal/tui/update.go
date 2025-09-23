@@ -21,24 +21,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if m.isInputMode {
-		oldValue := m.pathInput.Value()
-
-		cmd, keyWasHandled := m.handleInputModeKeys(msg)
+		cmd = m.updateInputMode(msg)
 		cmds = append(cmds, cmd)
-
-		if !keyWasHandled {
-			m.pathInput, cmd = m.pathInput.Update(msg)
-			cmds = append(cmds, cmd)
-		}
-
-		if m.pathInput.Value() != oldValue {
-			m.updateCompletions()
-		}
-
 	} else if m.isFilterMode {
-		m.pathInput, cmd = m.pathInput.Update(msg)
-		cmds = append(cmds, cmd)
-
 		cmd = m.updateFilterMode(msg)
 		cmds = append(cmds, cmd)
 	} else {
@@ -52,26 +37,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	footerHeight := lipgloss.Height(footerContent)
 	m.viewport.Width = m.width
 	m.viewport.Height = m.height - headerHeight - footerHeight
-	m.viewport, cmd = m.viewport.Update(msg)
-	cmds = append(cmds, cmd)
+
 	m.viewport.SetContent(m.renderFileList())
 	m.ensureCursorVisible()
 
 	return m, tea.Batch(cmds...)
 }
 
-// ... (All handler functions from the original handlers.go are placed here as methods on *Model)
-// e.g., func (m *Model) handleConfirmAndExit() tea.Cmd { ... }
-
 func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
-	// Zapamiętaj wartość pola tekstowego PRZED aktualizacją
 	oldValue := m.pathInput.Value()
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case KeyTab:
-			// TAB teraz tylko uzupełnia, nie generuje listy.
 			m.handleAutoComplete()
 			return nil
 		case KeyEnter:
@@ -83,13 +62,14 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 		}
 	}
 
-	m.pathInput, _ = m.pathInput.Update(msg)
+	var cmd tea.Cmd
+	m.pathInput, cmd = m.pathInput.Update(msg)
 
 	if m.pathInput.Value() != oldValue {
 		m.updateCompletions()
 	}
 
-	return nil
+	return cmd
 }
 
 func (m *Model) updateFilterMode(msg tea.Msg) tea.Cmd {
@@ -104,9 +84,11 @@ func (m *Model) updateFilterMode(msg tea.Msg) tea.Cmd {
 			return nil
 		}
 	}
+	var cmd tea.Cmd
+	m.pathInput, cmd = m.pathInput.Update(msg)
 	m.filterQuery = m.pathInput.Value()
 	m.clampCursor()
-	return nil
+	return cmd
 }
 
 func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
@@ -115,12 +97,7 @@ func (m *Model) updateNormalMode(msg tea.Msg) tea.Cmd {
 		switch msg.String() {
 		case KeyEscape:
 			m.handleClearFilter()
-			return nil
 		case KeyCtrlC:
-			if m.filterQuery != "" {
-				m.handleClearFilter()
-				return nil
-			}
 			return m.handleCancelAndExit()
 		case KeyQ:
 			return m.handleConfirmAndExit()
@@ -154,7 +131,7 @@ func (m *Model) handleConfirmAndExit() tea.Cmd {
 }
 
 func (m *Model) handleCancelAndExit() tea.Cmd {
-	m.Aborted = true // Set the aborted flag
+	m.Aborted = true
 	return tea.Quit
 }
 
@@ -180,15 +157,11 @@ func (m *Model) handleConfirmPathChange() {
 		return
 	}
 
-	if _, err := loadItems(m.fsys, absPath, m.config); err != nil {
-		m.inputErrorMsg = "Error reading directory: " + err.Error()
-	} else {
-		m.completionSuggestions = nil
-		m.changeDirectory(absPath)
-		m.isInputMode = false
-		m.inputErrorMsg = ""
-		m.pathInput.Reset()
-	}
+	m.changeDirectory(absPath)
+	m.isInputMode = false
+	m.inputErrorMsg = ""
+	m.pathInput.Reset()
+	m.completionSuggestions = nil
 }
 
 func (m *Model) handleCancelPathChange() {
@@ -231,32 +204,27 @@ func (m *Model) handleNavigateToParent() {
 
 func (m *Model) handleSelectFile() {
 	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return
-	}
-	currentItem := visibleItems[m.cursor]
-	if !currentItem.isExcluded {
-		fullPath := filepath.Join(m.path, currentItem.name)
-		if _, ok := m.selected[fullPath]; ok {
-			delete(m.selected, fullPath)
-		} else {
-			m.selected[fullPath] = struct{}{}
+	if len(visibleItems) > 0 {
+		currentItem := visibleItems[m.cursor]
+		if !currentItem.isExcluded {
+			fullPath := filepath.Join(m.path, currentItem.name)
+			if _, ok := m.selected[fullPath]; ok {
+				delete(m.selected, fullPath)
+			} else {
+				m.selected[fullPath] = struct{}{}
+			}
 		}
 	}
 }
 
 func (m *Model) handleSelectAllFiles() {
 	visibleItems := m.getVisibleItems()
-	if len(visibleItems) == 0 {
-		return
-	}
-
-	allSelectableAreSelected := true
+	allSelected := true
 	for _, item := range visibleItems {
 		if !item.isExcluded {
 			fullPath := filepath.Join(m.path, item.name)
 			if _, ok := m.selected[fullPath]; !ok {
-				allSelectableAreSelected = false
+				allSelected = false
 				break
 			}
 		}
@@ -265,7 +233,7 @@ func (m *Model) handleSelectAllFiles() {
 	for _, item := range visibleItems {
 		if !item.isExcluded {
 			fullPath := filepath.Join(m.path, item.name)
-			if allSelectableAreSelected {
+			if allSelected {
 				delete(m.selected, fullPath)
 			} else {
 				m.selected[fullPath] = struct{}{}
@@ -275,31 +243,26 @@ func (m *Model) handleSelectAllFiles() {
 }
 
 func (m *Model) handleGoToTop() {
-	m.viewport.GotoTop()
 	m.cursor = 0
 }
 
 func (m *Model) handleGoToBottom() {
-	m.viewport.GotoBottom()
-	m.cursor = len(m.getVisibleItems()) - 1
+	visibleItems := m.getVisibleItems()
+	if len(visibleItems) > 0 {
+		m.cursor = len(visibleItems) - 1
+	}
 }
 
 func (m *Model) handleEnterPathInputMode() tea.Cmd {
 	m.isInputMode = true
 	m.inputErrorMsg = ""
-
-	pathValue := m.path
-	if !strings.HasSuffix(pathValue, string(filepath.Separator)) {
-		pathValue += string(filepath.Separator)
-	}
-
+	pathValue := m.path + string(filepath.Separator)
 	m.pathInput.SetValue(pathValue)
 	m.pathInput.SetCursor(len(pathValue))
-
 	m.updateCompletions()
-
 	return m.pathInput.Focus()
 }
+
 func (m *Model) handleEnterFilterMode() tea.Cmd {
 	m.isFilterMode = true
 	m.pathInput.SetValue(m.filterQuery)
@@ -312,13 +275,12 @@ func (m *Model) handleCancelFilter() {
 	m.pathInput.Reset()
 }
 
-func (m.Model) updateCompletions() {
+func (m *Model) updateCompletions() {
 	currentInput := m.pathInput.Value()
 	if currentInput == "" {
 		m.completionSuggestions = nil
 		return
 	}
-
 	dirToSearch, prefix := m.getCompletionParts(currentInput)
 	suggestions, err := m.getCompletions(dirToSearch, prefix)
 	if err != nil {
@@ -332,10 +294,8 @@ func (m *Model) handleAutoComplete() {
 	if len(m.completionSuggestions) == 0 {
 		return
 	}
-
 	suggestions := m.completionSuggestions
 	dirToSearch, _ := m.getCompletionParts(m.pathInput.Value())
-
 	var newInputValue string
 	if len(suggestions) == 1 {
 		newInputValue = filepath.Join(dirToSearch, suggestions[0])
@@ -348,35 +308,11 @@ func (m *Model) handleAutoComplete() {
 	}
 
 	info, err := m.fsys.Stat(newInputValue)
-	if err == nil && info.IsDir() {
-		if !strings.HasSuffix(newInputValue, string(filepath.Separator)) {
-			newInputValue += string(filepath.Separator)
-		}
+	if err == nil && info.IsDir() && !strings.HasSuffix(newInputValue, string(filepath.Separator)) {
+		newInputValue += string(filepath.Separator)
 	}
 
 	m.pathInput.SetValue(newInputValue)
 	m.pathInput.SetCursor(len(newInputValue))
-
 	m.updateCompletions()
-}
-
-func (m *Model) handleInputModeKeys(msg tea.Msg) (tea.Cmd, bool) {
-	keyMsg, ok := msg.(tea.KeyMsg)
-	if !ok {
-		return nil, false
-	}
-
-	switch keyMsg.String() {
-	case KeyTab:
-		m.handleAutoComplete()
-		return nil, true
-	case KeyEnter:
-		m.handleConfirmPathChange()
-		return nil, true
-	case KeyEscape, KeyCtrlC:
-		m.handleCancelPathChange()
-		return nil, true
-	}
-
-	return nil, false
 }
