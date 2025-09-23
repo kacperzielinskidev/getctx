@@ -304,7 +304,6 @@ func (m *Model) handleAutoComplete() {
 	m.pathInput.SetValue(newInputValue)
 	m.pathInput.SetCursor(len(newInputValue))
 
-	// Po uzupełnieniu, natychmiast odśwież listę sugestii.
 	m.updateCompletions()
 }
 
@@ -317,14 +316,14 @@ func (m *Model) handleInputModeKeys(msg tea.Msg) (tea.Cmd, bool) {
 	switch keyMsg.String() {
 	case KeyTab:
 		m.handleAutoComplete()
-		return nil, true // Klucz obsłużony
+		return nil, true
 	case KeyEnter:
 		m.handleConfirmPathChange()
-		return nil, true // Klucz obsłużony
+		return nil, true
 	case KeyEscape, KeyCtrlC:
 		m.handleCancelPathChange()
-		return nil, true // Klucz obsłużony
+		return nil, true
 	}
 
-	return nil, false // To nie był nasz skrót, pozwól polu tekstowemu go obsłużyć.
+	return nil, false
 }
