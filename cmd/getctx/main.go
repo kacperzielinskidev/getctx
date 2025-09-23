@@ -1,4 +1,3 @@
-// Plik: cmd/getctx/main.go
 package main
 
 import (

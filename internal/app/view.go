@@ -55,7 +55,7 @@ func (m *Model) renderHeader() string {
 		return m.renderPathInput()
 	}
 
-	filterIndicator := FormatFilterIndicator(m.filterQuery)
+	filterIndicator := formatFilterIndicator(m.filterQuery)
 
 	helpHeader := Elements.Text.HelpHeader
 	pathStyle := lipgloss.NewStyle().Width(m.width)

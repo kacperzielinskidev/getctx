@@ -150,12 +150,3 @@ func (m *Model) clampCursor() {
 		m.cursor = maxCursor
 	}
 }
-
-func (m *Model) ensureCursorVisible() {
-	if m.cursor < m.viewport.YOffset {
-		m.viewport.SetYOffset(m.cursor)
-	}
-	if m.cursor >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.SetYOffset(m.cursor - m.viewport.Height + 1)
-	}
-}

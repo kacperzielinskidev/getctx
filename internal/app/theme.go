@@ -165,10 +165,19 @@ func init() {
 
 }
 
-func FormatFilterIndicator(query string) string {
+func formatFilterIndicator(query string) string {
 	if query == "" {
 		return ""
 	}
 	indicator := fmt.Sprintf(Elements.Text.FilterIndicator, query)
 	return Styles.List.Hint.Render(indicator)
+}
+
+func (m *Model) ensureCursorVisible() {
+	if m.cursor < m.viewport.YOffset {
+		m.viewport.SetYOffset(m.cursor)
+	}
+	if m.cursor >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.SetYOffset(m.cursor - m.viewport.Height + 1)
+	}
 }
