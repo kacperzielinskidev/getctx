@@ -33,13 +33,14 @@ type TUIListElements struct {
 }
 
 type TUITextElements struct {
-	HelpHeader      string
-	InputHeader     string
-	FilterHeader    string
-	FilterIndicator string
-	PathPrefix      string
-	StatusFooter    string
-	EmptyMessage    string
+	HelpHeader       string
+	InputHeader      string
+	FilterHeader     string
+	FilterIndicator  string
+	PathPrefix       string
+	StatusFooter     string
+	EmptyMessage     string
+	NoMatchesMessage string
 }
 
 type TUIElements struct {
@@ -82,6 +83,7 @@ type TUITexts struct {
 	PathPrefix            string
 	StatusFooter          string
 	EmptyMessage          string
+	NoMatchesMessage      string
 }
 
 var Icons TUIIcons
@@ -134,6 +136,7 @@ func init() {
 		PathPrefix:            "Current path: ",
 		StatusFooter:          "\nSelected %d items. Press 'q' to save and exit.",
 		EmptyMessage:          "[ This directory is empty ]",
+		NoMatchesMessage:      "[ No matching files or directories found ]",
 	}
 
 	Elements = TUIElements{
@@ -156,10 +159,11 @@ func init() {
 				texts.FilterHeaderBase,
 				Styles.List.Hint.Render(texts.FilterHeaderHint),
 			) + "\n",
-			FilterIndicator: texts.FilterIndicatorFormat,
-			PathPrefix:      texts.PathPrefix,
-			StatusFooter:    texts.StatusFooter,
-			EmptyMessage:    texts.EmptyMessage,
+			FilterIndicator:  texts.FilterIndicatorFormat,
+			PathPrefix:       texts.PathPrefix,
+			StatusFooter:     texts.StatusFooter,
+			EmptyMessage:     texts.EmptyMessage,
+			NoMatchesMessage: texts.NoMatchesMessage,
 		},
 	}
 

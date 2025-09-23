@@ -14,4 +14,5 @@ const (
 	KeyP         = "ctrl+p"
 	KeyEscape    = "esc"
 	KeySlash     = "/"
+	KeyTab       = "tab"
 )
