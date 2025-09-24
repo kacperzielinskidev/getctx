@@ -178,6 +178,18 @@ func (m *Model) handleConfirmPathChange() {
 	}
 
 	cleanedPath := filepath.Clean(finalPath)
+
+	info, err := m.fsys.Stat(cleanedPath)
+	if err != nil {
+		m.inputErrorMsg = "Error: Path not found or is inaccessible."
+		return
+	}
+
+	if !info.IsDir() {
+		m.inputErrorMsg = "Error: Path is a file, not a directory."
+		return
+	}
+
 	m.changeDirectory(cleanedPath)
 
 	m.isInputMode = false
