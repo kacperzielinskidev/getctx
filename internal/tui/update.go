@@ -160,7 +160,6 @@ func (m *Model) handleClearFilter() {
 func (m *Model) handleConfirmPathChange() {
 	inputPath := m.pathInput.Value()
 
-	// 1. Obsługa skrótu '~' dla katalogu domowego
 	if strings.HasPrefix(inputPath, "~") {
 		home, err := m.fsys.UserHomeDir()
 		if err == nil {
@@ -170,26 +169,17 @@ func (m *Model) handleConfirmPathChange() {
 
 	var finalPath string
 
-	// 2. OSTATECZNA, ROZBUDOWANA LOGIKA OBSŁUGI ŚCIEŻEK
 	if filepath.IsAbs(inputPath) {
-		// Przypadek 1: Ścieżka jest w pełni absolutna (np. "C:\Users" lub "/home/user").
-		// Używamy jej bez modyfikacji.
 		finalPath = inputPath
 	} else if runtime.GOOS == "windows" && (strings.HasPrefix(inputPath, `\`) || strings.HasPrefix(inputPath, `/`)) {
-		// Przypadek 2 (Windows): Ścieżka jest względna do roota dysku (np. "\Users").
-		// Łączymy nazwę bieżącego woluminu (np. "C:") z podaną ścieżką.
 		finalPath = filepath.VolumeName(m.path) + inputPath
 	} else {
-		// Przypadek 3: Ścieżka jest względna do bieżącego katalogu TUI (np. "folder" lub "..").
-		// Łączymy ją z bieżącą ścieżką w TUI.
 		finalPath = filepath.Join(m.path, inputPath)
 	}
 
-	// 3. Wyczyść ścieżkę (np. rozwiązuje ".." i ".") i zmień katalog
 	cleanedPath := filepath.Clean(finalPath)
 	m.changeDirectory(cleanedPath)
 
-	// 4. Zresetuj stan trybu wprowadzania
 	m.isInputMode = false
 	m.inputErrorMsg = ""
 	m.pathInput.Reset()
