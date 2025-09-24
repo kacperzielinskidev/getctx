@@ -10,3 +10,9 @@ run: build
 
 run-debug: build
 	@$(BINARY_PATH) --debug
+
+profile-cpu: build
+	@$(BINARY_PATH) --cpuprofile=cpu.pprof
+
+analyze-cpu:
+	@go tool pprof $(BINARY_PATH) cpu.pprof

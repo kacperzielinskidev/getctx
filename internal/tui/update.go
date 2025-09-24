@@ -53,16 +53,12 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 
 	oldValue := m.pathInput.Value()
 
-	// FIXED: Handle viewport scrolling by passing the message directly to its Update method.
-	// This replaces the deprecated LineUp/LineDown calls.
 	m.completionViewport, cmd = m.completionViewport.Update(msg)
 	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		// The viewport's Update method above now handles these keys.
-		// We only handle keys that the viewport doesn't.
 		case KeyTab:
 			m.handleAutoComplete()
 		case KeyEnter:
@@ -70,7 +66,6 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 		case KeyEscape, KeyCtrlC:
 			m.handleCancelPathChange()
 		default:
-			// For all other keys, update the text input.
 			m.pathInput, cmd = m.pathInput.Update(msg)
 			cmds = append(cmds, cmd)
 		}

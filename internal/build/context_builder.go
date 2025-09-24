@@ -9,7 +9,6 @@ import (
 	"sort"
 )
 
-// ContextBuilder encapsulates all dependencies and logic for creating the context file.
 type ContextBuilder struct {
 	log            *logger.Logger
 	fsys           fs.FileSystem
@@ -26,8 +25,6 @@ func NewContextBuilder(log *logger.Logger, fsys fs.FileSystem, outputFilename st
 	}
 }
 
-// Build is the main entry point for the business logic.
-// It takes the raw data it needs (selected paths) and performs its task.
 func (cb *ContextBuilder) Build(selectedPaths []string) error {
 	if len(selectedPaths) == 0 {
 		fmt.Println("ℹ️ No items selected. Exiting.")
@@ -59,8 +56,6 @@ func (cb *ContextBuilder) Build(selectedPaths []string) error {
 	})
 	return cb.writeContextFile(textFiles)
 }
-
-// Private helper methods follow...
 
 func (cb *ContextBuilder) findProcessableFiles(paths []string) ([]string, error) {
 	files, warnings, err := fs.DiscoverFiles(cb.fsys, paths, cb.config.ExcludedNames)
@@ -154,9 +149,9 @@ func (cb *ContextBuilder) appendFileToContext(writer io.Writer, path string) err
 		data        []byte
 		description string
 	}{
-		{[]byte(fmt.Sprintf("--- START OF FILE: %s ---\n", path)), "header"},
+		{[]byte(fmt.Appendf(nil, "--- START OF FILE: %s ---\n", path)), "header"},
 		{content, "content"},
-		{[]byte(fmt.Sprintf("\n--- END OF FILE: %s ---\n\n", path)), "footer"},
+		{[]byte(fmt.Appendf(nil, "\n--- END OF FILE: %s ---\n\n", path)), "footer"},
 	}
 
 	for _, chunk := range chunks {
