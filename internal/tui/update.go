@@ -40,8 +40,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.viewport.Height = viewportHeight
 	m.completionViewport.Height = viewportHeight
 
-	// FIXED: This line was re-introduced by mistake and is now correctly removed.
-	// The View() function is responsible for setting content.
 	m.ensureCursorVisible()
 
 	return m, tea.Batch(cmds...)

@@ -66,7 +66,6 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 		Aborted:            false,
 	}
 
-	m.viewport.SetContent(m.renderFileList())
 	return m, nil
 }
 
