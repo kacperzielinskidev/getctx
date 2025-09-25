@@ -13,27 +13,24 @@ import (
 
 type App struct {
 	log            *logger.Logger
-	fsys           fs.FileSystem
-	config         *config.Config
 	contextBuilder *build.ContextBuilder
+	config         *config.Config
+	fsys           fs.FileSystem
 	startPath      string
 }
 
-func NewApp(log *logger.Logger, outputFilename string, startPath string) *App {
-	fsys := fs.NewOSFileSystem()
-	cfg := config.NewConfig()
-	builder := build.NewContextBuilder(log, fsys, outputFilename, cfg)
-
-	log.Info("NewApp", map[string]string{
-		"outputFile": outputFilename,
-		"startPath":  startPath,
-	})
-
+func NewApp(
+	log *logger.Logger,
+	builder *build.ContextBuilder,
+	cfg *config.Config,
+	fsys fs.FileSystem,
+	startPath string,
+) *App {
 	return &App{
 		log:            log,
-		fsys:           fsys,
-		config:         cfg,
 		contextBuilder: builder,
+		config:         cfg,
+		fsys:           fsys,
 		startPath:      startPath,
 	}
 }
@@ -69,6 +66,5 @@ func (a *App) Run() error {
 			return err
 		}
 	}
-
 	return nil
 }

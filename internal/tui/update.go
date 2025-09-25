@@ -68,7 +68,6 @@ func (m *Model) updateInputMode(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, cmd)
 		}
 	default:
-		// Handle non-key messages for the text input.
 		m.pathInput, cmd = m.pathInput.Update(msg)
 		cmds = append(cmds, cmd)
 	}
