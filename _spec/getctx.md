@@ -108,3 +108,42 @@ The project follows modern Go application design, emphasizing a clear **Separati
 - `github.com/charmbracelet/bubbles/viewport`: The component for scrollable views.
 - `github.com/charmbracelet/bubbles/textinput`: The component that provides text input fields for the 'Direct Path Input' and 'In-View Filtering' features.
 - `github.com/charmbracelet/lipgloss`: The library for terminal styling.
+
+## 5. Project structure
+
+GETCTX
+├── \_spec
+├── bin
+│ └── getctx
+├── cmd
+│ └── getctx
+│ └── main.go
+├── internal
+│ ├── build
+│ │ └── context_builder.go
+│ ├── cli
+│ │ └── cli.go
+│ ├── config
+│ │ └── config.go
+│ ├── core
+│ │ └── app.go
+│ ├── fs
+│ │ ├── fsys.go
+│ │ ├── os_fs.go
+│ │ └── utils.go
+│ ├── logger
+│ │ └── logger.go
+│ └── tui
+│ ├── completions.go
+│ ├── keymap.go
+│ ├── model.go
+│ ├── theme.go
+│ ├── update.go
+│ └── view.go
+├── .gitignore
+├── context.txt
+├── debug.log
+├── go.mod
+├── go.sum
+├── Makefile
+└── README.md

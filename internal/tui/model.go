@@ -48,7 +48,7 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 	}
 
 	ti := textinput.New()
-	ti.Prompt = Icons.Cursor + " "
+	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
 	ti.Focus()
 
 	vp := viewport.New(0, 0)

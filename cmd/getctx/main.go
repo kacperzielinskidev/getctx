@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"getctx/cmd/getctx/cli"
+	"getctx/internal/cli"
 	"os"
 )
 
