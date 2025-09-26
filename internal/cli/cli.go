@@ -3,13 +3,14 @@ package cli
 import (
 	"flag"
 	"fmt"
-	"getctx/internal/build"
-	"getctx/internal/config"
-	"getctx/internal/core"
-	"getctx/internal/fs"
-	"getctx/internal/logger"
 	"os"
 	"runtime/pprof"
+
+	"github.com/kacperzielinskidev/getctx/internal/build"
+	"github.com/kacperzielinskidev/getctx/internal/config"
+	"github.com/kacperzielinskidev/getctx/internal/core"
+	"github.com/kacperzielinskidev/getctx/internal/fs"
+	"github.com/kacperzielinskidev/getctx/internal/logger"
 )
 
 func Run() error {

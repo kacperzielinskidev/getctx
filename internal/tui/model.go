@@ -2,8 +2,9 @@ package tui
 
 import (
 	"fmt"
-	"getctx/internal/config"
-	"getctx/internal/fs"
+
+	"github.com/kacperzielinskidev/getctx/internal/config"
+	"github.com/kacperzielinskidev/getctx/internal/fs"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"

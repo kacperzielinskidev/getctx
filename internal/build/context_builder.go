@@ -2,11 +2,12 @@ package build
 
 import (
 	"fmt"
-	"getctx/internal/config"
-	"getctx/internal/fs"
-	"getctx/internal/logger"
 	"io"
 	"sort"
+
+	"github.com/kacperzielinskidev/getctx/internal/config"
+	"github.com/kacperzielinskidev/getctx/internal/fs"
+	"github.com/kacperzielinskidev/getctx/internal/logger"
 )
 
 type ContextBuilder struct {

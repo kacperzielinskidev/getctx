@@ -2,11 +2,12 @@ package core
 
 import (
 	"fmt"
-	"getctx/internal/build"
-	"getctx/internal/config"
-	"getctx/internal/fs"
-	"getctx/internal/logger"
-	"getctx/internal/tui"
+
+	"github.com/kacperzielinskidev/getctx/internal/build"
+	"github.com/kacperzielinskidev/getctx/internal/config"
+	"github.com/kacperzielinskidev/getctx/internal/fs"
+	"github.com/kacperzielinskidev/getctx/internal/logger"
+	"github.com/kacperzielinskidev/getctx/internal/tui"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

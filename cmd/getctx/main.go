@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"getctx/internal/cli"
 	"os"
+
+	"github.com/kacperzielinskidev/getctx/internal/cli"
 )
 
 func main() {

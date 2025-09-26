@@ -1,4 +1,4 @@
-module getctx
+module github.com/kacperzielinskidev/getctx
 
 go 1.25.0
 
