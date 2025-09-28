@@ -3,6 +3,7 @@ package cli
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"runtime/pprof"
 
@@ -31,17 +32,20 @@ func Run() error {
 		defer pprof.StopCPUProfile()
 	}
 
-	logFile, err := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		return fmt.Errorf("could not open log file: %w", err)
-	}
-	defer logFile.Close()
-
+	var logOutput io.Writer = io.Discard
 	logLevel := logger.LevelInfo
+
 	if *debug {
+		debugFile, err := os.OpenFile("debug.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			return fmt.Errorf("could not open log file: %w", err)
+		}
+		defer debugFile.Close()
+
+		logOutput = debugFile
 		logLevel = logger.LevelDebug
 	}
-	log := logger.New(logFile, logLevel)
+	log := logger.New(logOutput, logLevel)
 	log.Info("main", "Logger initialized successfully.")
 
 	fsys := fs.NewOSFileSystem()
