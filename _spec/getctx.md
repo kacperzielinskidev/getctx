@@ -8,57 +8,51 @@ The main use case is to quickly aggregate source code context from a project, wh
 
 ## 2. Project Architecture
 
-The project follows modern Go application design, emphasizing a clear **Separation of Concerns**. The core logic is managed by a central `App` orchestrator, with distinct packages for the TUI, business logic, and shared utilities.
+The project follows modern Go application design, emphasizing a clear **Separation of Concerns**. The core logic is managed by a central `App` orchestrator in the `core` package, with distinct packages for the CLI setup, TUI, business logic, filesystem abstraction, and other utilities.
 
-- **`cmd/getctx/main.go`**: **Minimal Entrypoint**. Its sole responsibilities are:
+- **`cmd/getctx/main.go`**: **Minimal Entrypoint**. Its sole responsibility is to call the `Run` function from the `internal/cli` package and handle any fatal errors at the highest level.
 
-  - Initializing the global, structured logger.
-  - Creating and running the main `App` instance from the `internal/app` package.
-  - Handling and logging fatal errors at the highest level.
+- **`internal/cli/cli.go`**: **CLI Layer**. This package is responsible for:
 
-- **`internal/app/app.go`**: **Application Orchestrator**.
+  - Parsing command-line flags (e.g., `-o`, `--debug`).
+  - Initializing dependencies like the logger, configuration, and filesystem abstraction.
+  - Instantiating the core application orchestrator (`core.App`) and the `ContextBuilder`.
+  - Running the main application.
 
-  - Contains the central `App` struct that encapsulates the application's lifecycle and dependencies.
-  - **`NewApp()`**: Responsible for parsing command-line flags (e.g., `-o`).
-  - **`Run()`**: Executes the main application flow: starts the TUI, waits for it to exit, and then passes the final state to the context-building logic.
+- **`internal/core/app.go`**: **Application Orchestrator**.
 
-- **`internal/logger/logger.go`**: **Global Structured Logger**.
+  - Contains the central `App` struct that encapsulates the application's lifecycle and dependencies (`logger`, `ContextBuilder`, `fsys`, etc.).
+  - **`Run()`**: Executes the main application flow: starts the TUI, waits for it to exit, and then passes the final state to the `ContextBuilder` to perform the main business logic.
 
-  - A dedicated, site-wide package for logging.
-  - Provides a global singleton instance, accessible via functions like `logger.Info()`, `logger.Error()`.
-  - Logs messages in a structured **JSON format** to a `debug.log` file.
-  - Includes log levels (DEBUG, INFO, WARN, ERROR) and a `name` field to identify the context of the log entry.
+- **`internal/tui/`**: **Terminal User Interface (TUI) Core**.
 
-- **`internal/app/model.go`**: **Terminal User Interface (TUI) Core**.
-
-  - All interactive logic resides here, built using the **`bubbletea`** library and the Model-View-Update pattern.
-  - **`Model` struct**: Holds the entire TUI state, including the cursor, selected items, current path, and modes (e.g., input mode, filter mode).
-  - **`View()` method**: Renders the UI based on the model's state.
-  - **`Update()` method**: A key component that handles all user input and state changes. It now performs **dynamic layout calculation on every frame**, ensuring the UI remains responsive and correctly sized.
+  - All interactive logic resides in this package, built using the **`bubbletea`** library and the Model-View-Update pattern.
+  - **`model.go`**: Defines the `Model` struct, which holds the entire TUI state, including the cursor, selected items, current path, and modes (e.g., input mode, filter mode).
+  - **`view.go`**: Contains the `View()` method, which renders the UI based on the model's state.
+  - **`update.go`**: Contains the `Update()` method, a key component that handles all user input and state changes. It performs dynamic layout calculation to ensure the UI remains responsive.
   - Integrates a **`viewport`** component to smoothly handle scrolling through long file lists.
+  - **`theme.go`**, **`keymap.go`**, **`completions.go`**: Helper files that define visual styles, keybindings, and path auto-completion logic, respectively.
 
-- **`internal/app/build_context.go`**: **Business Logic**.
+- **`internal/build/context_builder.go`**: **Business Logic**.
 
   - Contains the "brain" of the application that runs after the TUI exits.
-  - Responsible for processing the list of selected paths from the `Model`, filtering non-text files, and building the final `context.txt`.
+  - It is responsible for processing the list of selected paths received from the TUI, discovering all nested files, filtering out non-text files, and building the final `context.txt`.
 
-- **`internal/app/fs_utils.go`** & **`filesystem.go`**: **File System Abstraction**.
+- **`internal/fs/`**: **File System Abstraction**.
 
-  - Provides file and folder helper functions and an `FileSystem` interface for improved testability.
-  - **`discoverFiles`**: Recursively finds all eligible files.
-  - **`isTextFile`**: Detects if a file is text-based.
+  - Provides a clean `FileSystem` interface for improved testability (decoupling from the `os` package).
+  - **`fsys.go`**: Defines the `FileSystem` interface.
+  - **`os_fs.go`**: Provides the concrete implementation of the interface using standard library functions.
+  - **`utils.go`**: Contains helper functions like `discoverFiles` (to recursively find eligible files) and `isTextFile` (to detect if a file is text-based).
 
-- **`internal/app/theme.go`**: **Theme & Style Definitions**.
+- **`internal/config/config.go`**: **Application Configuration**.
 
-  - Centralizes all visual elements (icons, colors, `lipgloss` styles).
-  - Includes helper functions to format UI components, such as the filter status indicator, ensuring a consistent look and feel.
+  - Stores application-wide configuration, primarily the lists of excluded file names, folder names, and file extensions.
 
-- **`internal/app/keybindings.go`**: **Keybinding Definitions**.
-
-  - Defines all keyboard shortcuts as constants to avoid "magic strings".
-
-- **`internal/app/config.go`**: **Application Configuration**.
-  - Stores application-wide configuration, such as the list of excluded file and folder names.
+- **`internal/logger/logger.go`**: **Global Structured Logger**.
+  - A dedicated, site-wide package for logging.
+  - Logs messages in a structured **JSON format** to a `debug.log` file when enabled.
+  - Includes log levels (DEBUG, INFO, WARN, ERROR) and a `name` field to identify the context of the log entry.
 
 ## 3. Key Features and Logic
 
@@ -75,12 +69,12 @@ The project follows modern Go application design, emphasizing a clear **Separati
 - **Direct Path Input Mode:**
 
   - **Activation:** Pressing `CTRL+P` (`handleEnterPathInputMode`) activates a text input field.
-  - **Functionality:** Allows the user to directly type or paste an absolute or relative path. Supports `~` as a shortcut for the user's home directory.
+  - **Functionality:** Allows the user to directly type or paste an absolute or relative path. Supports `~` as a shortcut for the user's home directory and provides **tab-completion**.
   - **User Guidance:** Clear, color-coded on-screen hints (`(enter: Confirm, esc/ctrl+c: Cancel)`) guide the user.
   - **Confirmation & Cancellation:** `Enter` (`handleConfirmPathChange`) attempts to navigate to the path. `Esc` or `CTRL+C` (`handleCancelPathChange`) exits the input mode without changes.
   - **Error Handling:** If an invalid path is entered, a non-disruptive error message appears directly below the input field.
 
-- **Intelligent File Exclusion (Blacklist):** The tool maintains a configurable list of names to ignore (e.g., `.git`, `node_modules`). Ignored items are visually dimmed and cannot be interacted with.
+- **Intelligent File Exclusion (Blacklist):** The tool maintains a configurable list of names and extensions to ignore (e.g., `.git`, `node_modules`, `.png`). Ignored items are visually dimmed and cannot be interacted with.
 
 - **Selection:**
 
@@ -111,40 +105,41 @@ The project follows modern Go application design, emphasizing a clear **Separati
 
 ## 5. Project structure
 
-GETCTX
-├── \_spec
-│ ├── getctx.md
-│ └── rules.md
+```GETCTX
+├── _spec
+│   ├── getctx.md
+│   └── rules.md
 ├── .github
-│ └── workflows
-│ └── release.yml
+│   └── workflows
+│       └── release.yml
 ├── cmd
-│ └── getctx
-│ └── main.go
+│   └── getctx
+│       └── main.go
 ├── internal
-│ ├── build
-│ │ └── context_builder.go
-│ ├── cli
-│ │ └── cli.go
-│ ├── config
-│ │ └── config.go
-│ ├── core
-│ │ └── app.go
-│ ├── fs
-│ │ ├── fsys.go
-│ │ ├── os_fs.go
-│ │ └── utils.go
-│ ├── logger
-│ │ └── logger.go
-│ └── tui
-│ ├── completions.go
-│ ├── keymap.go
-│ ├── model.go
-│ ├── theme.go
-│ ├── update.go
-│ └── view.go
+│   ├── build
+│   │   └── context_builder.go
+│   ├── cli
+│   │   └── cli.go
+│   ├── config
+│   │   └── config.go
+│   ├── core
+│   │   └── app.go
+│   ├── fs
+│   │   ├── fsys.go
+│   │   ├── os_fs.go
+│   │   └── utils.go
+│   ├── logger
+│   │   └── logger.go
+│   └── tui
+│       ├── completions.go
+│       ├── keymap.go
+│       ├── model.go
+│       ├── theme.go
+│       ├── update.go
+│       └── view.go
 ├── .gitignore
 ├── context.txt
 ├── go.mod
 ├── go.sum
 └── Makefile
+```
