@@ -66,6 +66,8 @@ jobs:
         name: Create GitHub Release
         needs: build
         runs-on: ubuntu-latest
+        permissions:
+            contents: write
 
         steps:
             - name: Download all artifacts
