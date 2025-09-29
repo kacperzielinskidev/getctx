@@ -2,3 +2,4 @@ bin
 context.txt
 *.log
 .env
+cpu.pprof
