@@ -1,4 +1,4 @@
-# Your Program Name
+# Getctx
 
 A brief description of your program. Write one or two sentences here explaining what your tool does.
 
@@ -87,3 +87,4 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     ```shell
     your-program-name.exe --version
     ```
+
