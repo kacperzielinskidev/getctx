@@ -113,8 +113,11 @@ The project follows modern Go application design, emphasizing a clear **Separati
 
 GETCTX
 ├── \_spec
-├── bin
-│ └── getctx
+│ ├── getctx.md
+│ └── rules.md
+├── .github
+│ └── workflows
+│ └── release.yml
 ├── cmd
 │ └── getctx
 │ └── main.go
@@ -142,8 +145,6 @@ GETCTX
 │ └── view.go
 ├── .gitignore
 ├── context.txt
-├── debug.log
 ├── go.mod
 ├── go.sum
-├── Makefile
-└── README.md
+└── Makefile
