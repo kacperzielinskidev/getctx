@@ -81,24 +81,38 @@ Installation on Linux involves downloading the archive, extracting it, giving th
 On Windows, the process involves downloading the `.zip` archive, extracting it, and then adding the folder containing the `.exe` file to the system's `PATH` environment variable.
 
 1.  **Download the archive**
-    Download the latest `.zip` file from the [Releases](URL_TO_YOUR_REPOSITORY/releases) section on GitHub.
+    You can download the archive in one of two ways:
+
+    - **A) Manually**
+      Click the link below to download the `.zip` file directly from your browser:
+      [getctx_v1.0.0_windows.zip](https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip)
+
+    - **B) Using PowerShell/Terminal**
+      Open PowerShell and use one of the following commands to download the archive:
+
+      ```powershell
+      # Using Invoke-WebRequest (built-in)
+      Invoke-WebRequest -Uri "https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip" -OutFile "getctx.zip"
+
+      # Or using curl (if available)
+      curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip
+      ```
 
 2.  **Extract the archive**
-    Right-click the downloaded `.zip` file and select "Extract All...". Follow the on-screen instructions to extract the contents to a new folder.
+    Right-click the downloaded `.zip` file (e.g., `getctx.zip`) and select "Extract All...". Follow the on-screen instructions to extract the contents to a new folder.
 
 3.  **Create a destination folder and move the file**
 
-    - Create a dedicated, permanent folder for the program, for example `C:\Program Files\YourProgram`.
-    - Move the extracted `your-program-name.exe` file into this newly created folder.
+    - Create a dedicated, permanent folder for the program, for example `C:\Program Files\getctx`.
+    - Move the extracted `getctx.exe` file into this newly created folder.
 
 4.  **Add the folder to the PATH environment variable**
     This allows Windows to find your program from any command line.
 
     - Press the `Windows` key and type "environment variables".
-    - Select "Edit the system environment variables".
-    - In the new window, click the "Environment Variables..." button.
+    - In the Advanced tab, click the Environment Variables... button.
     - In the "System variables" section, find and select the `Path` variable, then click "Edit...".
-    - Click "New" and paste the path to the folder you created, i.e., `C:\Program Files\YourProgram`.
+    - Click "New" and paste the path to the folder you created, i.e., `C:\Program Files\getctx`.
     - Confirm all open windows by clicking "OK".
 
 5.  **Restart your terminal**
@@ -108,7 +122,5 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     You can now run the program from any location.
 
     ```shell
-    your-program-name.exe --version
+    getctx --version
     ```
-
-
