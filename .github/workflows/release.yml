@@ -58,8 +58,9 @@ jobs:
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: binaries
+                  name: binary-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
                   path: dist/*
+                  if-no-files-found: error
 
     release:
         name: Create GitHub Release
@@ -70,7 +71,6 @@ jobs:
             - name: Download all artifacts
               uses: actions/download-artifact@v4
               with:
-                  name: binaries
                   path: release-assets
 
             - name: Create Release and Upload Assets
