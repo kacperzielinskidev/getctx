@@ -39,14 +39,14 @@ package-linux-amd64:
 	@echo "--> Packaging for Linux AMD64 (wersja $(VERSION))..."
 	@mkdir -p $(DIST_DIR)
 	@GOOS=linux GOARCH=amd64 go build -o $(DIST_DIR)/$(BINARY_NAME) $(MAIN_PACKAGE_PATH)
-	@cd $(DIST_DIR) && tar -czf $(BINARY_NAME)_$(VERSION)_linux_amd64.tar.gz $(BINARY_NAME)
+	@cd $(DIST_DIR) && tar -czf $(BINARY_NAME)_$(VERSION)_linux.tar.gz $(BINARY_NAME)
 	@rm $(DIST_DIR)/$(BINARY_NAME)
 
 package-windows-amd64:
 	@echo "--> Packaging for Windows AMD64 (wersja $(VERSION))..."
 	@mkdir -p $(DIST_DIR)
 	@GOOS=windows GOARCH=amd64 go build -o $(DIST_DIR)/$(BINARY_NAME).exe $(MAIN_PACKAGE_PATH)
-	@cd $(DIST_DIR) && zip $(BINARY_NAME)_$(VERSION)_windows_amd64.zip $(BINARY_NAME).exe
+	@cd $(DIST_DIR) && zip $(BINARY_NAME)_$(VERSION)_windows.zip $(BINARY_NAME).exe
 	@rm $(DIST_DIR)/$(BINARY_NAME).exe
 
 package-darwin-amd64:
