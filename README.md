@@ -1,4 +1,4 @@
-# Your Program Name
+# Getctx
 
 `getctx` is a powerful and interactive command-line (CLI) tool, written in Go, designed to streamline the process of gathering and consolidating source code and text files into a single, cohesive context file.
 
@@ -110,3 +110,4 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     ```shell
     your-program-name.exe --version
     ```
+
