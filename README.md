@@ -4,7 +4,7 @@
 
 ### What problem does it solve?
 
-Have you ever found yourself manually copying and pasting content from multiple files just to provide context to a large language model (LLM) like GPT, create a detailed bug report, or prepare a code snippet for documentation? This process is often tedious, error-prone, and clutters your clipboard. You might forget key files or accidentally include irrelevant ones (like binaries or files from a `.git` directory).
+Have you ever found yourself manually copying and pasting content from multiple files just to provide context to a large language model (LLM) like GPT or Google AI Studio, create a detailed bug report, or prepare a code snippet for documentation? This process is often tedious, error-prone, and clutters your clipboard. You might forget key files or accidentally include irrelevant ones (like binaries or files from a `.git` directory).
 
 ### How can `getctx` help?
 
@@ -110,4 +110,5 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     ```shell
     your-program-name.exe --version
     ```
+
 
