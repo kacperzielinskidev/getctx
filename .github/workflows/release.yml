@@ -7,7 +7,7 @@ on:
 
 jobs:
     build:
-        name: Build for ${{ matrix.platform.os }}/${{ matrix.platform.arch }}
+        name: Build for ${{ matrix.platform.os }}
         runs-on: ubuntu-latest
 
         strategy:
