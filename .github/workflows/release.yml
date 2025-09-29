@@ -27,45 +27,22 @@ jobs:
               with:
                   go-version-file: "go.mod"
 
-            - name: Prepare variables for build
-              id: vars
+            - name: Build and Package Artifact
               run: |
-                  BINARY_NAME="getctx"
-                  if [ "${{ matrix.platform.os }}" = "windows" ]; then
-                    EXT=".exe"
-                  else
-                    EXT=""
-                  fi
-
-                  echo "BINARY_FILE=${BINARY_NAME}${EXT}" >> $GITHUB_OUTPUT
-                  echo "ARCHIVE_NAME=${BINARY_NAME}_${{ github.ref_name }}_${{ matrix.platform.os }}_${{ matrix.platform.arch }}" >> $GITHUB_OUTPUT
-
-            - name: Build binary
-              run: |
-                  # Kompilacja krzyżowa (cross-compilation) z użyciem zmiennych środowiskowych
-                  env GOOS=${{ matrix.platform.os }} GOARCH=${{ matrix.platform.arch }} \
-                  go build -o "dist/${{ steps.vars.outputs.BINARY_FILE }}" ./cmd/getctx
-
-            - name: Package binary into an archive
-              run: |
-                  cd dist
-                  if [ "${{ matrix.platform.os }}" = "windows" ]; then
-                    zip "${{ steps.vars.outputs.ARCHIVE_NAME }}.zip" "${{ steps.vars.outputs.BINARY_FILE }}"
-                  else
-                    tar -czf "${{ steps.vars.outputs.ARCHIVE_NAME }}.tar.gz" "${{ steps.vars.outputs.BINARY_FILE }}"
-                  fi
+                  make package-${{ matrix.platform.os }}-${{ matrix.platform.arch }} VERSION=${{ github.ref_name }}
 
             - name: Upload artifact
               uses: actions/upload-artifact@v4
               with:
                   name: binary-${{ matrix.platform.os }}-${{ matrix.platform.arch }}
-                  path: dist/*
+                  path: dist/getctx_${{ github.ref_name }}_${{ matrix.platform.os }}_${{ matrix.platform.arch }}${{ matrix.platform.os == 'windows' && '.zip' || '.tar.gz' }}
                   if-no-files-found: error
 
     release:
         name: Create GitHub Release
         needs: build
         runs-on: ubuntu-latest
+
         permissions:
             contents: write
 
