@@ -40,10 +40,10 @@ Installation on Linux involves downloading the archive, extracting it, giving th
 
     ```sh
     # Using curl
-    curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_linux_amd64.tar.gz
+    curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_linux.tar.gz
 
     # Or using wget
-    wget https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_linux_amd64.tar.gz
+    wget https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_linux.tar.gz
     ```
 
 2.  **Extract the archive**
@@ -92,10 +92,10 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
 
       ```powershell
       # Using Invoke-WebRequest (built-in)
-      Invoke-WebRequest -Uri "https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip" -OutFile "getctx.zip"
+      Invoke-WebRequest -Uri "https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_windows.zip" -OutFile "getctx.zip"
 
       # Or using curl (if available)
-      curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip
+      curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_windows.zip
       ```
 
 2.  **Extract the archive**
@@ -124,3 +124,4 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     ```shell
     getctx --version
     ```
+
