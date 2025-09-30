@@ -49,5 +49,3 @@ package-windows:
 	@cd $(DIST_DIR) && zip $(BINARY_NAME)_$(VERSION)_windows.zip $(BINARY_NAME).exe
 	@rm $(DIST_DIR)/$(BINARY_NAME).exe
 
-clean:
-	@rm -rf $(BIN_DIR) $(DIST_DIR) *.pprof *.log

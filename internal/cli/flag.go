@@ -21,6 +21,7 @@ type cleanupFunc func()
 
 var noOpCleanup = func() {}
 
+// TODO: handle --version flag ( version should be set automatically durning release )
 func setupAndParseFlags() (*flagConfig, cleanupFunc, error) {
 	fs := flag.NewFlagSet("getctx", flag.ExitOnError)
 
