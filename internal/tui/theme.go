@@ -106,7 +106,7 @@ func init() {
 
 	HelpHeader = lipgloss.JoinHorizontal(lipgloss.Left,
 		"Select files ",
-		Styles.List.Hint.Render("(space: select, a: select all, ctrl+p: find path, /: filter, q: save, ctrl+c: quit)"),
+		Styles.List.Hint.Render("(space: select, a: select all, ctrl+p: find path, /: filter, esc: clear filters, q: save, ctrl+c: quit)"),
 	) + "\n"
 
 	InputHeader = lipgloss.JoinHorizontal(lipgloss.Left,

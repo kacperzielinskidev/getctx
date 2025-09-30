@@ -28,7 +28,6 @@ func NewConfig() *Config {
 			"Thumbs.db":         {},
 			"bin":               {},
 			"dist":              {},
-			"build":             {},
 			".cache":            {},
 			"target":            {},
 			".env":              {},
