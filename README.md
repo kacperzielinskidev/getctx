@@ -35,43 +35,42 @@ Below are the instructions on how to download and install the program so that it
 
 Installation on Linux involves downloading the archive, extracting it, giving the binary file execution permissions, and moving it to the `/usr/local/bin` directory, which is typically in the system's `PATH`.
 
-1.  **Download the archive**
-    Open a terminal and use the `curl` or `wget` command to download the latest version of the program in `.tar.gz` format.
+Installation on Linux involves cloning the repository, building the binary, giving it execution permissions, and moving it to the `/usr/local/bin` directory, which is typically in the system's `PATH`.
+
+1.  **Clone the repository**
+    Open a terminal and use the `git` command to clone the repository and navigate into the project directory.
 
     ```sh
-    # Using curl
-    curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_linux.tar.gz
-
-    # Or using wget
-    wget https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_linux.tar.gz
+    git clone https://github.com/kacperzielinskidev/getctx.git
+    cd getctx
     ```
 
-2.  **Extract the archive**
-    Use the `tar` command to extract the contents of the archive.
+2.  **Build the program**
+    Use the `make build` command to build the binary.
 
     ```sh
-    tar -xzf archive-name.tar.gz
+    make build
     ```
 
 3.  **Grant execution permissions**
     After extracting, you will find the binary file. Grant it execution permissions.
 
     ```sh
-    chmod +x your-program-name
+    chmod +x bin/getctx
     ```
 
 4.  **Move the file to `/usr/local/bin`**
     Moving the binary file to this directory will make it accessible from anywhere in the system. You will need administrator privileges (`sudo`).
 
     ```sh
-    sudo mv your-program-name /usr/local/bin/
+    sudo mv bin/getctx /usr/local/bin/
     ```
 
 5.  **Done!**
     You can now run the program by typing its name from any location in the terminal.
 
     ```sh
-    your-program-name --version
+    getctx --version
     ```
 
 ---
@@ -80,26 +79,34 @@ Installation on Linux involves downloading the archive, extracting it, giving th
 
 On Windows, the process involves downloading the `.zip` archive, extracting it, and then adding the folder containing the `.exe` file to the system's `PATH` environment variable.
 
-1.  **Download the archive**
-    You can download the archive in one of two ways:
+1.  **Clone the repository**
+    Open a terminal and use the `git` command to clone the repository and navigate into the project directory.
 
-    - **A) Manually**
-      Click the link below to download the `.zip` file directly from your browser:
-      [getctx_v1.0.0_windows.zip](https://github.com/kacperzielinskidev/getctx/releases/download/v1.0.0/getctx_v1.0.0_windows.zip)
+    ```powershell
+    git clone https://github.com/kacperzielinskidev/getctx.git
+    cd getctx
+    ```
 
-    - **B) Using PowerShell/Terminal**
-      Open PowerShell and use one of the following commands to download the archive:
+2.  **Build the program**
+    You can build the executable in two ways:
 
-      ```powershell
-      # Using Invoke-WebRequest (built-in)
-      Invoke-WebRequest -Uri "https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_windows.zip" -OutFile "getctx.zip"
+    **A) Using `make` (if available)**
+    If you have `make` installed on your system, run:
 
-      # Or using curl (if available)
-      curl -LO https://github.com/kacperzielinskidev/getctx/releases/download/[version]/getctx_[version]_windows.zip
-      ```
+    ```powershell
+    make build-windows
+    ```
 
-2.  **Extract the archive**
-    Right-click the downloaded `.zip` file (e.g., `getctx.zip`) and select "Extract All...". Follow the on-screen instructions to extract the contents to a new folder.
+    This will create `getctx.exe` inside the `bin` directory.
+
+    **B) Using the `go` command**
+    If you don't have `make`, you can use the standard `go` command:
+
+    ```powershell
+    go build -o bin\getctx.exe ./cmd/getctx
+    ```
+
+    This will also create `getctx.exe` inside the `bin` directory.
 
 3.  **Create a destination folder and move the file**
 
@@ -124,4 +131,3 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
     ```shell
     getctx --version
     ```
-
