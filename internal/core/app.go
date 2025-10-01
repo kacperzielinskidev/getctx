@@ -68,12 +68,6 @@ func (a *App) Run() (*build.BuildResult, error) {
 	}
 
 	if m.Aborted {
-		fmt.Println("Operation cancelled.")
-		a.log.Info("App.Run", "User aborted the operation.")
-		return nil, err
-	}
-
-	if m.Aborted {
 		a.log.Info("App.Run", "User aborted the operation.")
 		return nil, ErrAbortedByUser
 	}

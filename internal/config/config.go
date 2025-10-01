@@ -10,44 +10,45 @@ type Config struct {
 	ExcludedExtensions map[string]struct{}
 }
 
+var defaultExcludedNames = []string{
+	".git", ".svn", ".hg",
+	"node_modules", "vendor",
+	"package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lockb",
+	".vscode", ".idea",
+	".DS_Store", "Thumbs.db",
+	"bin", "dist", "build", "target",
+	".cache",
+	".env",
+	"context.txt",
+}
+
+var defaultExcludedExtensions = []string{
+	".jpg", ".jpeg", ".jpe", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp",
+	".ico", ".heic", ".heif", ".avif", ".jp2", ".j2k", ".jpf", ".jpx", ".jpm",
+	".mj2", ".svg", ".ai", ".eps",
+	".pdf", ".psd", ".xcf", ".indd",
+	".raw", ".cr2", ".nef", ".nrw", ".arw", ".srf", ".sr2", ".orf", ".dng",
+	".raf", ".pef", ".rw2",
+	".tga", ".pcx", ".ppm", ".pgm", ".pbm", ".pnm",
+	".zip", ".tar", ".gz", ".bz2", ".xz", ".rar", ".7z", ".tgz", ".iso",
+	".dmg", ".jar", ".war", ".ear",
+}
+
 func NewConfig() *Config {
-	return &Config{
-		ExcludedNames: map[string]struct{}{
-			".git":              {},
-			".svn":              {},
-			".hg":               {},
-			"node_modules":      {},
-			"vendor":            {},
-			"package-lock.json": {},
-			"yarn.lock":         {},
-			"pnpm-lock.yaml":    {},
-			"bun.lockb":         {},
-			".vscode":           {},
-			".idea":             {},
-			".DS_Store":         {},
-			"Thumbs.db":         {},
-			"bin":               {},
-			"dist":              {},
-			".cache":            {},
-			"target":            {},
-			".env":              {},
-			"context.txt":       {},
-		},
-		ExcludedExtensions: map[string]struct{}{
-			".jpg": {}, ".jpeg": {}, ".jpe": {}, ".png": {}, ".gif": {},
-			".bmp": {}, ".tiff": {}, ".tif": {}, ".webp": {}, ".ico": {},
-			".heic": {}, ".heif": {}, ".avif": {}, ".jp2": {}, ".j2k": {},
-			".jpf": {}, ".jpx": {}, ".jpm": {}, ".mj2": {}, ".svg": {},
-			".ai": {}, ".eps": {}, ".pdf": {}, ".raw": {}, ".cr2": {},
-			".nef": {}, ".nrw": {}, ".arw": {}, ".srf": {}, ".sr2": {},
-			".orf": {}, ".dng": {}, ".raf": {}, ".pef": {}, ".rw2": {},
-			".psd": {}, ".xcf": {}, ".indd": {}, ".tga": {}, ".pcx": {},
-			".ppm": {}, ".pgm": {}, ".pbm": {}, ".pnm": {}, ".zip": {},
-			".tar": {}, ".gz": {}, ".bz2": {}, ".xz": {}, ".rar": {},
-			".7z": {}, ".tgz": {}, ".iso": {}, ".dmg": {}, ".jar": {},
-			".war": {}, ".ear": {},
-		},
+	cfg := &Config{
+		ExcludedNames:      make(map[string]struct{}),
+		ExcludedExtensions: make(map[string]struct{}),
 	}
+
+	for _, name := range defaultExcludedNames {
+		cfg.ExcludedNames[name] = struct{}{}
+	}
+
+	for _, ext := range defaultExcludedExtensions {
+		cfg.ExcludedExtensions[ext] = struct{}{}
+	}
+
+	return cfg
 }
 
 func (c *Config) IsExcluded(name string) bool {

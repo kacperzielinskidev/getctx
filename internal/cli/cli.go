@@ -28,6 +28,7 @@ func Run() error {
 	result, err := app.Run()
 	if err != nil {
 		if errors.Is(err, core.ErrAbortedByUser) {
+			fmt.Println("Operation cancelled.")
 			return nil
 		}
 		return err
