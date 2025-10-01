@@ -14,9 +14,10 @@ func (m *Model) View() string {
 	footer := m.renderFooter()
 
 	var mainContent string
-	if m.isInputMode {
+	switch m.mode {
+	case modePathInput:
 		mainContent = m.renderCompletionView()
-	} else {
+	default:
 		m.viewport.SetContent(m.renderFileListView())
 		mainContent = m.viewport.View()
 	}
@@ -28,11 +29,12 @@ func (m *Model) View() string {
 	)
 }
 
-func (m *Model) getVisibleItems() []item {
+func (m *Model) getVisibleItems() []listItem {
 	if m.filterQuery == "" {
 		return m.items
 	}
-	var filteredItems []item
+
+	var filteredItems []listItem
 	lowerQuery := strings.ToLower(m.filterQuery)
 	for _, i := range m.items {
 		if strings.Contains(strings.ToLower(i.name), lowerQuery) {
@@ -43,8 +45,8 @@ func (m *Model) getVisibleItems() []item {
 }
 
 func (m *Model) renderHeader() string {
-	if m.isInputMode || m.isFilterMode {
-		return m.renderPathInput()
+	if m.mode == modePathInput || m.mode == modeFilter {
+		return m.renderTextInput()
 	}
 
 	filterIndicator := formatFilterIndicator(m.filterQuery)
@@ -58,14 +60,16 @@ func (m *Model) renderHeader() string {
 	)
 }
 
-func (m *Model) renderPathInput() string {
+func (m *Model) renderTextInput() string {
 	var s strings.Builder
+
 	prompt := InputHeader
-	if m.isFilterMode {
+	if m.mode == modeFilter {
 		prompt = FilterHeader
 	}
+
 	s.WriteString(prompt)
-	s.WriteString(m.pathInput.View())
+	s.WriteString(m.textInput.View())
 
 	if m.inputErrorMsg != "" {
 		s.WriteString("\n" + Styles.Log.Error.Render(m.inputErrorMsg))
@@ -95,12 +99,12 @@ func (m *Model) renderFileListView() string {
 	return s.String()
 }
 
-func (m *Model) renderListItem(index int, item item) string {
+func (m *Model) renderListItem(index int, item listItem) string {
 	fullPath := filepath.Join(m.path, item.name)
 	_, isSelected := m.selected[fullPath]
 	isCursorOnItem := m.cursor == index
 
-	style := Styles.List.Normal
+	var style lipgloss.Style
 
 	if item.isExcluded {
 		style = Styles.List.Excluded
@@ -160,8 +164,6 @@ func calculateGridDimensions(suggestions []string, maxWidth int) (numCols int, c
 	const padding = 2
 	bestNumCols := 1
 
-	// Pętla od największej możliwej liczby kolumn w dół,
-	// aby znaleźć pierwszą pasującą (najbardziej kompaktową) siatkę.
 	for cols := maxCols; cols >= 1; cols-- {
 		numRows := (len(suggestions) + cols - 1) / cols
 		if numRows == 0 {
@@ -189,7 +191,6 @@ func calculateGridDimensions(suggestions []string, maxWidth int) (numCols int, c
 			return bestNumCols, colWidths
 		}
 	}
-	// Fallback na jedną kolumnę, jeśli nic się nie zmieściło
 	colWidths = []int{maxWidth}
 	return 1, colWidths
 }

@@ -11,30 +11,43 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+type tuiMode int
+
+const (
+	modeNormal tuiMode = iota
+	modePathInput
+	modeFilter
+)
+
 type item struct {
 	name       string
 	isDir      bool
 	isExcluded bool
 }
 
+type listItem struct {
+	name       string
+	isDir      bool
+	isExcluded bool
+}
+
 type Model struct {
-	path                  string
-	items                 []item
-	cursor                int
-	selected              map[string]struct{}
 	config                *config.Config
 	fsys                  fs.FileSystem
-	pathInput             textinput.Model
-	isInputMode           bool
-	isFilterMode          bool
-	filterQuery           string
-	inputErrorMsg         string
+	path                  string
+	items                 []listItem
+	selected              map[string]struct{}
+	Aborted               bool
+	textInput             textinput.Model
 	viewport              viewport.Model
 	completionViewport    viewport.Model
+	mode                  tuiMode
+	cursor                int
+	filterQuery           string
+	inputErrorMsg         string
+	completionSuggestions []string
 	width                 int
 	height                int
-	completionSuggestions []string
-	Aborted               bool
 }
 
 func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Model, error) {
@@ -43,7 +56,7 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 		return nil, fmt.Errorf("could not get absolute path for '%s': %w", startPath, err)
 	}
 
-	items, err := loadItems(fsys, path, config)
+	items, err := loadListItems(fsys, path, config)
 	if err != nil {
 		return nil, fmt.Errorf("could not read directory '%s': %w", path, err)
 	}
@@ -52,19 +65,16 @@ func NewModel(startPath string, config *config.Config, fsys fs.FileSystem) (*Mod
 	ti.Prompt = Icons.Cursor + Elements.List.CursorEmpty
 	ti.Focus()
 
-	vp := viewport.New(0, 0)
-	completionVP := viewport.New(0, 0)
-
 	m := &Model{
+		config:             config,
+		fsys:               fsys,
 		path:               path,
 		items:              items,
 		selected:           make(map[string]struct{}),
-		config:             config,
-		fsys:               fsys,
-		pathInput:          ti,
-		viewport:           vp,
-		completionViewport: completionVP,
-		Aborted:            false,
+		textInput:          ti,
+		viewport:           viewport.New(0, 0),
+		completionViewport: viewport.New(0, 0),
+		mode:               modeNormal,
 	}
 
 	return m, nil
@@ -83,7 +93,7 @@ func (m *Model) GetSelectedPaths() []string {
 }
 
 func (m *Model) changeDirectory(newPath string) {
-	newItems, err := loadItems(m.fsys, newPath, m.config)
+	newItems, err := loadListItems(m.fsys, newPath, m.config)
 	if err != nil {
 		m.inputErrorMsg = "Error reading directory: " + err.Error()
 		return
@@ -93,29 +103,34 @@ func (m *Model) changeDirectory(newPath string) {
 	m.items = newItems
 	m.cursor = 0
 	m.filterQuery = ""
-	m.pathInput.Reset()
+	m.textInput.Reset()
 	m.viewport.GotoTop()
 }
 
-func loadItems(fsys fs.FileSystem, path string, config *config.Config) ([]item, error) {
+func loadListItems(fsys fs.FileSystem, path string, config *config.Config) ([]listItem, error) {
 	dirEntries, err := fsys.ReadDir(path)
 	if err != nil {
 		return nil, err
 	}
-	var items []item
-	for _, entry := range dirEntries {
-		items = append(items, item{
+
+	items := make([]listItem, len(dirEntries))
+	for i, entry := range dirEntries {
+		items[i] = listItem{
 			name:       entry.Name(),
 			isDir:      entry.IsDir(),
 			isExcluded: config.IsExcluded(entry.Name()),
-		})
+		}
 	}
 	return items, nil
 }
 
 func (m *Model) clampCursor() {
 	visibleItems := m.getVisibleItems()
-	maxCursor := max(len(visibleItems)-1, 0)
+	maxCursor := len(visibleItems) - 1
+	if maxCursor < 0 {
+		maxCursor = 0
+	}
+
 	if m.cursor > maxCursor {
 		m.cursor = maxCursor
 	}
