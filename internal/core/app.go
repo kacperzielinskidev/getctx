@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/kacperzielinskidev/getctx/internal/build"
@@ -12,12 +13,15 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var ErrAbortedByUser = errors.New("operation aborted by user")
+
 type App struct {
 	log            *logger.Logger
 	contextBuilder *build.ContextBuilder
 	config         *config.Config
 	fsys           fs.FileSystem
 	startPath      string
+	outputFilename string
 }
 
 func NewApp(
@@ -26,6 +30,8 @@ func NewApp(
 	cfg *config.Config,
 	fsys fs.FileSystem,
 	startPath string,
+	outputFilename string,
+
 ) *App {
 	return &App{
 		log:            log,
@@ -33,15 +39,16 @@ func NewApp(
 		config:         cfg,
 		fsys:           fsys,
 		startPath:      startPath,
+		outputFilename: outputFilename,
 	}
 }
 
-func (a *App) Run() error {
+func (a *App) Run() (*build.BuildResult, error) {
 	model, err := tui.NewModel(a.startPath, a.config, a.fsys)
 	if err != nil {
 		err = fmt.Errorf("error initializing TUI model: %w", err)
 		a.log.Error("App.Run.NewModel", err)
-		return err
+		return nil, err
 	}
 
 	p := tea.NewProgram(model, tea.WithAltScreen())
@@ -50,22 +57,34 @@ func (a *App) Run() error {
 	if err != nil {
 		err = fmt.Errorf("an error occurred while running the TUI program: %w", err)
 		a.log.Error("App.Run.p.Run", err)
-		return err
+		return nil, err
 	}
 
-	if m, ok := finalModel.(*tui.Model); ok {
-		if m.Aborted {
-			fmt.Println("Operation cancelled.")
-			a.log.Info("App.Run", "User aborted the operation.")
-			return nil
-		}
-
-		err := a.contextBuilder.Build(m.GetSelectedPaths())
-		if err != nil {
-			err = fmt.Errorf("a critical error occurred while creating the context file: %w", err)
-			a.log.Error("App.Run.BuildContext", err)
-			return err
-		}
+	m, ok := finalModel.(*tui.Model)
+	if !ok {
+		err = fmt.Errorf("internal error: final TUI model has unexpected type")
+		a.log.Error("App.Run.TypeAssertion", err)
+		return nil, err
 	}
-	return nil
+
+	if m.Aborted {
+		fmt.Println("Operation cancelled.")
+		a.log.Info("App.Run", "User aborted the operation.")
+		return nil, err
+	}
+
+	if m.Aborted {
+		a.log.Info("App.Run", "User aborted the operation.")
+		return nil, ErrAbortedByUser
+	}
+
+	result, err := a.contextBuilder.Build(m.GetSelectedPaths(), a.outputFilename)
+
+	if err != nil {
+		err = fmt.Errorf("a critical error occurred while creating the context file: %w", err)
+		a.log.Error("App.Run.BuildContext", err)
+		return nil, err
+	}
+	return result, nil
+
 }

@@ -10,27 +10,35 @@ import (
 	"github.com/kacperzielinskidev/getctx/internal/logger"
 )
 
+const (
+	fileHeaderFormat = "--- START OF FILE: %s ---\n"
+	fileFooterFormat = "\n--- END OF FILE: %s ---\n\n"
+)
+
 type ContextBuilder struct {
-	log            *logger.Logger
-	fsys           fs.FileSystem
-	config         *config.Config
-	outputFilename string
+	log    *logger.Logger
+	fsys   fs.FileSystem
+	config *config.Config
 }
 
-func NewContextBuilder(log *logger.Logger, fsys fs.FileSystem, outputFilename string, cfg *config.Config) *ContextBuilder {
+type BuildResult struct {
+	FilesProcessed int
+	FilesSkipped   int
+	PathsWithErr   []string
+}
+
+func NewContextBuilder(log *logger.Logger, fsys fs.FileSystem, cfg *config.Config) *ContextBuilder {
 	return &ContextBuilder{
-		log:            log,
-		fsys:           fsys,
-		config:         cfg,
-		outputFilename: outputFilename,
+		log:    log,
+		fsys:   fsys,
+		config: cfg,
 	}
 }
 
-func (cb *ContextBuilder) Build(selectedPaths []string) error {
+func (cb *ContextBuilder) Build(selectedPaths []string, outputFilename string) (*BuildResult, error) {
 	if len(selectedPaths) == 0 {
-		fmt.Println("ℹ️ No items selected. Exiting.")
 		cb.log.Info("BuildContext", "No items selected by user, exiting.")
-		return nil
+		return &BuildResult{}, nil
 	}
 
 	cb.log.Debug("BuildContext", map[string]any{
@@ -38,42 +46,36 @@ func (cb *ContextBuilder) Build(selectedPaths []string) error {
 		"selected_paths":      selectedPaths,
 	})
 
-	processableFiles, err := cb.findProcessableFiles(selectedPaths)
+	allFiles, warnings, err := fs.DiscoverFiles(cb.fsys, selectedPaths, cb.config.ExcludedNames)
 	if err != nil {
-		cb.log.Error("BuildContext.findProcessableFiles", err)
-		return err
+		cb.log.Error("BuildContext.DiscoverFiles", err)
+		return nil, fmt.Errorf("error discovering files: %w", err)
 	}
 
-	textFiles := cb.filterTextFiles(processableFiles)
+	textFiles := cb.filterTextFiles(allFiles)
 
-	if !cb.handleNoTextFilesFound(len(processableFiles), len(textFiles)) {
+	result := &BuildResult{
+		FilesProcessed: len(textFiles),
+		FilesSkipped:   len(allFiles) - len(textFiles),
+		PathsWithErr:   warnings,
+	}
+
+	if len(textFiles) == 0 {
 		cb.log.Info("BuildContext", "No text files found to process.")
-		return nil
+		return result, nil
 	}
 
 	cb.log.Info("BuildContext", map[string]any{
 		"files_to_process_count": len(textFiles),
-		"output_filename":        cb.outputFilename,
+		"output_filename":        outputFilename,
 	})
-	return cb.writeContextFile(textFiles)
-}
 
-func (cb *ContextBuilder) findProcessableFiles(paths []string) ([]string, error) {
-	files, warnings, err := fs.DiscoverFiles(cb.fsys, paths, cb.config.ExcludedNames)
+	err = cb.writeContextFile(outputFilename, textFiles)
 	if err != nil {
-		err = fmt.Errorf("error discovering files: %w", err)
-		cb.log.Error("findProcessableFiles.discoverFiles", err)
-		return nil, err
+		return result, err
 	}
 
-	if len(warnings) > 0 {
-		fmt.Println("⚠️ Some paths were skipped due to errors:")
-		for _, warn := range warnings {
-			cb.log.Warn("findProcessableFiles", warn)
-			fmt.Printf("   - %s\n", warn)
-		}
-	}
-	return files, nil
+	return result, nil
 }
 
 func (cb *ContextBuilder) filterTextFiles(files []string) []string {
@@ -81,7 +83,6 @@ func (cb *ContextBuilder) filterTextFiles(files []string) []string {
 	for _, path := range files {
 		isText, err := fs.IsTextFile(cb.fsys, path)
 		if err != nil {
-			fmt.Printf("⚠️ Warning: Could not check file type for %s: %v\n", path, err)
 			cb.log.Warn("filterTextFiles", map[string]any{
 				"message": "Could not check file type",
 				"path":    path,
@@ -96,47 +97,27 @@ func (cb *ContextBuilder) filterTextFiles(files []string) []string {
 	return textFiles
 }
 
-func (cb *ContextBuilder) handleNoTextFilesFound(totalFiles, textFiles int) bool {
-	if textFiles > 0 {
-		return true
-	}
-
-	skippedFileCount := totalFiles - textFiles
-	message := "\nℹ️ No text files found to include."
-	if skippedFileCount > 0 {
-		message += fmt.Sprintf(" %d file(s) were skipped (non-text or unreadable).", skippedFileCount)
-	}
-	message += " Output file was not created."
-	fmt.Println(message)
-
-	return false
-}
-
-func (cb *ContextBuilder) writeContextFile(files []string) error {
-	fmt.Printf("🚀 Building context file: %s\n", cb.outputFilename)
-	sort.Strings(files)
-	for _, path := range files {
-		fmt.Printf("   ❯ Adding content from: %s\n", path)
-	}
-
-	outputFile, err := cb.fsys.Create(cb.outputFilename)
+func (cb *ContextBuilder) writeContextFile(outputFilename string, files []string) error {
+	outputFile, err := cb.fsys.Create(outputFilename)
 	if err != nil {
 		cb.log.Error("writeContextFile.Create", err)
-		return fmt.Errorf("failed to create output file %s: %w", cb.outputFilename, err)
+		return fmt.Errorf("failed to create output file %s: %w", outputFilename, err)
 	}
 	defer outputFile.Close()
 
+	sort.Strings(files)
+
 	for _, path := range files {
 		if err := cb.appendFileToContext(outputFile, path); err != nil {
-			fmt.Printf("⚠️ Warning: Failed to append file %s: %v\n", path, err)
+			// Log the warning but continue processing other files.
 			cb.log.Warn("writeContextFile.append", map[string]any{
-				"message": "Failed to append file to context",
+				"message": "Failed to append file to context, skipping",
 				"path":    path,
 				"error":   err.Error(),
 			})
 		}
 	}
-	fmt.Printf("✅ Done! All content has been combined into %s\n", cb.outputFilename)
+
 	return nil
 }
 
@@ -146,19 +127,19 @@ func (cb *ContextBuilder) appendFileToContext(writer io.Writer, path string) err
 		return fmt.Errorf("could not read file %s: %w", path, err)
 	}
 
-	chunks := []struct {
-		data        []byte
-		description string
-	}{
-		{[]byte(fmt.Appendf(nil, "--- START OF FILE: %s ---\n", path)), "header"},
-		{content, "content"},
-		{[]byte(fmt.Appendf(nil, "\n--- END OF FILE: %s ---\n\n", path)), "footer"},
+	// Write header
+	if _, err := fmt.Fprintf(writer, fileHeaderFormat, path); err != nil {
+		return fmt.Errorf("error writing header for file %s: %w", path, err)
 	}
 
-	for _, chunk := range chunks {
-		if _, err := writer.Write(chunk.data); err != nil {
-			return fmt.Errorf("error writing %s for file %s: %w", chunk.description, path, err)
-		}
+	// Write content
+	if _, err := writer.Write(content); err != nil {
+		return fmt.Errorf("error writing content for file %s: %w", path, err)
+	}
+
+	// Write footer
+	if _, err := fmt.Fprintf(writer, fileFooterFormat, path); err != nil {
+		return fmt.Errorf("error writing footer for file %s: %w", path, err)
 	}
 
 	return nil
