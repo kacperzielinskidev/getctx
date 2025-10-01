@@ -117,6 +117,7 @@ func (m *Model) renderListItem(index int, item listItem) string {
 	cursorStr := Elements.List.CursorEmpty
 	if isCursorOnItem {
 		cursorStr = Icons.Cursor
+		style = style.Bold(true)
 	}
 
 	prefix := Elements.List.UnselectedPrefix
@@ -173,9 +174,9 @@ func calculateGridDimensions(suggestions []string, maxWidth int) (numCols int, c
 		currentWidths := make([]int, cols)
 		totalWidth := (cols - 1) * padding
 
-		for c := 0; c < cols; c++ {
+		for c := range cols {
 			maxWidthInCol := 0
-			for r := 0; r < numRows; r++ {
+			for r := range numRows {
 				i := c*numRows + r
 				if i < len(suggestions) {
 					maxWidthInCol = max(maxWidthInCol, len(suggestions[i]))
@@ -199,8 +200,8 @@ func buildGrid(suggestions []string, numCols int, colWidths []int) string {
 	var grid strings.Builder
 	numRows := (len(suggestions) + numCols - 1) / numCols
 
-	for r := 0; r < numRows; r++ {
-		for c := 0; c < numCols; c++ {
+	for r := range numRows {
+		for c := range numCols {
 			i := c*numRows + r
 			if i < len(suggestions) {
 				item := suggestions[i]
