@@ -17,10 +17,9 @@ func (m *Model) getCompletionParts(input string) (dir, prefix string) {
 	}
 
 	var analysisPath string
-
 	if filepath.IsAbs(path) {
 		analysisPath = path
-	} else if runtime.GOOS == "windows" && (strings.HasPrefix(path, `\`) || strings.HasPrefix(path, `/`)) {
+	} else if runtime.GOOS == "windows" && strings.HasPrefix(path, `\`) {
 		analysisPath = filepath.VolumeName(m.path) + path
 	} else {
 		analysisPath = filepath.Join(m.path, path)
@@ -37,13 +36,12 @@ func (m *Model) getCompletionParts(input string) (dir, prefix string) {
 }
 
 func (m *Model) getCompletions(dir, prefix string) ([]string, error) {
-	var matches []string
-
 	entries, err := m.fsys.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
+	var matches []string
 	for _, entry := range entries {
 		if strings.HasPrefix(entry.Name(), prefix) {
 			name := entry.Name()
@@ -60,6 +58,10 @@ func findLongestCommonPrefix(strs []string) string {
 	if len(strs) == 0 {
 		return ""
 	}
+	if len(strs) == 1 {
+		return strs[0]
+	}
+
 	prefix := strs[0]
 	for i := 1; i < len(strs); i++ {
 		for !strings.HasPrefix(strs[i], prefix) {

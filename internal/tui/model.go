@@ -19,12 +19,6 @@ const (
 	modeFilter
 )
 
-type item struct {
-	name       string
-	isDir      bool
-	isExcluded bool
-}
-
 type listItem struct {
 	name       string
 	isDir      bool
