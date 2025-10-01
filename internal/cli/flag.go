@@ -55,30 +55,26 @@ func setupAndParseFlags() (*flagConfig, cleanupFunc, error) {
 		config.logOutput = debugFile
 		config.logLevel = logger.LevelDebug
 
-		// Dodajemy zamknięcie pliku do naszej funkcji cleanup
 		cleanup = func() {
 			debugFile.Close()
 		}
 	}
 
-	// Przeniesiona logika dla flagi --cpuprofile
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
 		if err != nil {
 			return nil, nil, fmt.Errorf("could not create CPU profile: %w", err)
 		}
 		if err := pprof.StartCPUProfile(f); err != nil {
-			f.Close() // Zamknij plik, jeśli nie udało się wystartować profilera
+			f.Close()
 			return nil, nil, fmt.Errorf("could not start CPU profile: %w", err)
 		}
 
-		// Łączymy istniejący cleanup z nowymi zadaniami
-		// (zamknięcie pliku i zatrzymanie profilera)
 		existingCleanup := cleanup
 		cleanup = func() {
 			pprof.StopCPUProfile()
 			f.Close()
-			existingCleanup() // Wywołujemy poprzedni cleanup (np. zamknięcie pliku logów)
+			existingCleanup()
 		}
 	}
 

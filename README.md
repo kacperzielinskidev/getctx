@@ -69,10 +69,6 @@ Installation on Linux involves cloning the repository, building the binary, givi
 5.  **Done!**
     You can now run the program by typing its name from any location in the terminal.
 
-    ```sh
-    getctx --version
-    ```
-
 ---
 
 ### 🪟 Windows
@@ -127,7 +123,3 @@ On Windows, the process involves downloading the `.zip` archive, extracting it, 
 
 6.  **Done!**
     You can now run the program from any location.
-
-    ```shell
-    getctx --version
-    ```
