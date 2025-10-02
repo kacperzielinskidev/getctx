@@ -25,13 +25,13 @@ archives:
       - none*
     format_overrides:
       - goos: windows
-        formats: [ 'zip' ]
+        formats: ["zip"]
 
 checksum:
   name_template: "checksums.txt"
 
 nightly:
-  version_template: "{{ incpatch .Version }}-next""
+  version_template: "{{ incpatch .Version }}-next"
 
 changelog:
   sort: asc
