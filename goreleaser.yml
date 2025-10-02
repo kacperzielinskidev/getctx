@@ -39,3 +39,23 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+brews:
+  - name: getctx
+    repository:
+      owner: kacperzielinskidev
+      name: homebrew-tap
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"
+
+scoops:
+  - name: getctx
+    repository:
+      owner: kacperzielinskidev
+      name: scoop-bucket
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"
