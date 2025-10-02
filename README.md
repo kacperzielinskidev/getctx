@@ -31,9 +31,9 @@ Choose the installation method that suits you best. Using a package manager like
 
 ---
 
-### macOS & Linux (Homebrew)
+### macOS
 
-If you are on macOS or Linux, you can install `getctx` using the [Homebrew](https://brew.sh/) package manager.
+The recommended way to install `getctx` on macOS is by using the [Homebrew](https://brew.sh/) package manager.
 
 1.  **Add the Tap (one-time setup):**
     First, you need to add the repository containing the installation formula.
@@ -53,6 +53,35 @@ If you are on macOS or Linux, you can install `getctx` using the [Homebrew](http
 
 ```sh
 brew upgrade getctx
+```
+
+---
+
+### 🐧 Linux
+
+You have a few options for installing on Linux.
+
+#### Option A: Debian, Ubuntu, and derivatives (via .deb package)
+
+This method uses your system's native package manager (`dpkg`/`apt`) and is recommended for Debian-based distributions. The script below will automatically download and install the latest `.deb` package.
+
+```sh
+# Download the latest .deb package for your architecture (amd64 example)
+curl -sL -o /tmp/getctx.deb $(curl -s https://api.github.com/repos/kacperzielinskidev/getctx/releases/latest | grep "browser_download_url.*amd64.deb" | cut -d '"' -f 4)
+
+# Install the package
+sudo dpkg -i /tmp/getctx.deb
+```
+
+_(Note: For ARM-based systems like Raspberry Pi, replace `amd64.deb` in the script with `arm64.deb`)_
+
+#### Option B: Using Homebrew on Linux
+
+If you already use [Homebrew on Linux (Linuxbrew)](https://docs.brew.sh/Homebrew-on-Linux), you can follow the same instructions as for macOS:
+
+```sh
+brew tap kacperzielinskidev/tap
+brew install getctx
 ```
 
 ---
