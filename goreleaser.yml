@@ -59,3 +59,18 @@ scoops:
     homepage: "https://github.com/kacperzielinskidev/getctx"
     description: "A CLI tool to consolidate source code into a single context file."
     license: "MIT"
+
+nfpms:
+  - id: getctx-packages
+    package_name: getctx
+    formats:
+      - deb
+      - rpm
+    vendor: "kacperzielinskidev"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    maintainer: "Kacper Zielinski kacperzielinskidev@gmail.com"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"
+    contents:
+      - src: ./dist/getctx_{{ .Os }}_{{ .Arch }}/getctx
+        dst: /usr/bin/getctx
