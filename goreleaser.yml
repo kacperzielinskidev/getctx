@@ -72,5 +72,5 @@ nfpms:
     description: "A CLI tool to consolidate source code into a single context file."
     license: "MIT"
     contents:
-      - src: ./dist/getctx_{{ .Os }}_{{ .Arch }}/getctx
+      - src: "{{ .Path }}"
         dst: /usr/bin/getctx
