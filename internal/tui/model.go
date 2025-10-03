@@ -121,11 +121,11 @@ func loadListItems(fsys fs.FileSystem, path string, config *config.Config) ([]li
 func (m *Model) clampCursor() {
 	visibleItems := m.getVisibleItems()
 	maxCursor := len(visibleItems) - 1
-	if maxCursor < 0 {
-		maxCursor = 0
-	}
+	maxCursor = max(maxCursor, 0)
 
 	if m.cursor > maxCursor {
 		m.cursor = maxCursor
 	}
+
+	m.cursor = max(m.cursor, 0)
 }
