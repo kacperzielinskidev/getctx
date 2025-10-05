@@ -66,10 +66,8 @@ You have a few options for installing on Linux.
 This method uses your system's native package manager (`dpkg`/`apt`) and is recommended for Debian-based distributions. The script below will automatically download and install the latest `.deb` package.
 
 ```sh
-# Download the latest .deb package for your architecture (amd64 example)
 curl -sL -o /tmp/getctx.deb $(curl -s https://api.github.com/repos/kacperzielinskidev/getctx/releases/latest | grep "browser_download_url.*amd64.deb" | cut -d '"' -f 4)
 
-# Install the package
 sudo dpkg -i /tmp/getctx.deb
 ```
 
@@ -130,4 +128,5 @@ You can also download a pre-compiled binary for your operating system directly f
 2.  Download the appropriate archive (`.zip` or `.tar.gz`) for your OS and architecture.
 3.  Extract the archive.
 4.  Move the `getctx` (or `getctx.exe`) executable to a directory in your system's `PATH` (e.g., `/usr/local/bin` on Linux or a dedicated folder on Windows).
+
 
