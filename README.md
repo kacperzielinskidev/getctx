@@ -81,6 +81,9 @@ If you already use [Homebrew on Linux (Linuxbrew)](https://docs.brew.sh/Homebrew
 
 ```sh
 brew tap kacperzielinskidev/tap
+```
+
+```sh
 brew install getctx
 ```
 
@@ -130,6 +133,7 @@ You can also download a pre-compiled binary for your operating system directly f
 2.  Download the appropriate archive (`.zip` or `.tar.gz`) for your OS and architecture.
 3.  Extract the archive.
 4.  Move the `getctx` (or `getctx.exe`) executable to a directory in your system's `PATH` (e.g., `/usr/local/bin` on Linux or a dedicated folder on Windows).
+
 
 
 
