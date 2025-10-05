@@ -1,0 +1,77 @@
+version: 2
+project_name: getctx
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: getctx
+    main: ./cmd/getctx
+    binary: getctx
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - none*
+    format_overrides:
+      - goos: windows
+        formats: ["zip"]
+
+checksum:
+  name_template: "checksums.txt"
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+brews:
+  - name: getctx
+    repository:
+      owner: kacperzielinskidev
+      name: homebrew-tap
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"
+
+scoops:
+  - name: getctx
+    repository:
+      owner: kacperzielinskidev
+      name: scoop-bucket
+      token: "{{ .Env.GORELEASER_TOKEN }}"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"
+
+nfpms:
+  - id: getctx-packages
+
+    ids:
+      - getctx
+
+    package_name: getctx
+    formats:
+      - deb
+      - rpm
+    vendor: "kacperzielinskidev"
+    homepage: "https://github.com/kacperzielinskidev/getctx"
+    maintainer: "Kacper Zielinski <kacperzielinskidev@gmail.com>"
+    description: "A CLI tool to consolidate source code into a single context file."
+    license: "MIT"

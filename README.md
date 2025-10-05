@@ -27,99 +27,107 @@ By automating the context-gathering process, `getctx` helps you:
 
 ## Installation
 
-Below are the instructions on how to download and install the program so that it is globally available on your system.
+Choose the installation method that suits you best. Using a package manager like Homebrew or Scoop is recommended for easy installation and automatic updates.
 
 ---
 
-### 🐧 Linux
+### macOS
 
-Installation on Linux involves downloading the archive, extracting it, giving the binary file execution permissions, and moving it to the `/usr/local/bin` directory, which is typically in the system's `PATH`.
+The recommended way to install `getctx` on macOS is by using the [Homebrew](https://brew.sh/) package manager.
 
-Installation on Linux involves cloning the repository, building the binary, giving it execution permissions, and moving it to the `/usr/local/bin` directory, which is typically in the system's `PATH`.
-
-1.  **Clone the repository**
-    Open a terminal and use the `git` command to clone the repository and navigate into the project directory.
+1.  **Add the Tap (one-time setup):**
+    First, you need to add the repository containing the installation formula.
 
     ```sh
-    git clone https://github.com/kacperzielinskidev/getctx.git
-    cd getctx
+    brew tap kacperzielinskidev/tap
     ```
 
-2.  **Build the program**
-    Use the `make build` command to build the binary.
+2.  **Install `getctx`:**
+    Now you can install the program.
 
     ```sh
-    make build
+    brew install getctx
     ```
 
-3.  **Grant execution permissions**
-    After extracting, you will find the binary file. Grant it execution permissions.
+**Updating `getctx` in the future:**
 
-    ```sh
-    chmod +x bin/getctx
-    ```
-
-4.  **Move the file to `/usr/local/bin`**
-    Moving the binary file to this directory will make it accessible from anywhere in the system. You will need administrator privileges (`sudo`).
-
-    ```sh
-    sudo mv bin/getctx /usr/local/bin/
-    ```
-
-5.  **Done!**
-    You can now run the program by typing its name from any location in the terminal.
+```sh
+brew upgrade getctx
+```
 
 ---
 
-### 🪟 Windows
+### Linux
 
-On Windows, the process involves downloading the `.zip` archive, extracting it, and then adding the folder containing the `.exe` file to the system's `PATH` environment variable.
+You have a few options for installing on Linux.
 
-1.  **Clone the repository**
-    Open a terminal and use the `git` command to clone the repository and navigate into the project directory.
+#### Option A: Debian, Ubuntu, and derivatives (via .deb package)
+
+This method uses your system's native package manager (`dpkg`/`apt`) and is recommended for Debian-based distributions. The script below will automatically download and install the latest `.deb` package.
+
+```sh
+# Download the latest .deb package for your architecture (amd64 example)
+curl -sL -o /tmp/getctx.deb $(curl -s https://api.github.com/repos/kacperzielinskidev/getctx/releases/latest | grep "browser_download_url.*amd64.deb" | cut -d '"' -f 4)
+
+# Install the package
+sudo dpkg -i /tmp/getctx.deb
+```
+
+_(Note: For ARM-based systems like Raspberry Pi, replace `amd64.deb` in the script with `arm64.deb`)_
+
+#### Option B: Using Homebrew on Linux
+
+If you already use [Homebrew on Linux (Linuxbrew)](https://docs.brew.sh/Homebrew-on-Linux), you can follow the same instructions as for macOS:
+
+```sh
+brew tap kacperzielinskidev/tap
+brew install getctx
+```
+
+---
+
+### Windows (Scoop)
+
+If you are a Windows user, the easiest way to install and manage `getctx` is with the [Scoop](https://scoop.sh/) package manager.
+
+1.  **Add the Bucket (one-time setup):**
+    Open PowerShell and add the repository containing the app manifests.
 
     ```powershell
-    git clone https://github.com/kacperzielinskidev/getctx.git
-    cd getctx
+    scoop bucket add kacperzielinskidev https://github.com/kacperzielinskidev/scoop-bucket.git
     ```
 
-2.  **Build the program**
-    You can build the executable in two ways:
-
-    **A) Using `make` (if available)**
-    If you have `make` installed on your system, run:
+2.  **Install `getctx`:**
+    Now, install the package.
 
     ```powershell
-    make build-windows
+    scoop install getctx
     ```
 
-    This will create `getctx.exe` inside the `bin` directory.
+**Updating `getctx` in the future:**
 
-    **B) Using the `go` command**
-    If you don't have `make`, you can use the standard `go` command:
+```powershell
+scoop update getctx
+```
 
-    ```powershell
-    go build -o bin\getctx.exe ./cmd/getctx
-    ```
+---
 
-    This will also create `getctx.exe` inside the `bin` directory.
+### Go Install
 
-3.  **Create a destination folder and move the file**
+```sh
+go install github.com/kacperzielinskidev/getctx/cmd/getctx@latest
+```
 
-    - Create a dedicated, permanent folder for the program, for example `C:\Program Files\getctx`.
-    - Move the extracted `getctx.exe` file into this newly created folder.
+The `getctx` binary will be placed in your `$GOPATH/bin` directory.
 
-4.  **Add the folder to the PATH environment variable**
-    This allows Windows to find your program from any command line.
+---
 
-    - Press the `Windows` key and type "environment variables".
-    - In the Advanced tab, click the Environment Variables... button.
-    - In the "System variables" section, find and select the `Path` variable, then click "Edit...".
-    - Click "New" and paste the path to the folder you created, i.e., `C:\Program Files\getctx`.
-    - Confirm all open windows by clicking "OK".
+### Manual Installation
 
-5.  **Restart your terminal**
-    Close any open terminal windows (CMD or PowerShell) and open a new one. Changes to the `PATH` variable require a new terminal session to take effect.
+You can also download a pre-compiled binary for your operating system directly from the GitHub Releases page.
 
-6.  **Done!**
-    You can now run the program from any location.
+1.  Go to the [**Latest Release page**](https://github.com/kacperzielinskidev/getctx/releases/latest).
+2.  Download the appropriate archive (`.zip` or `.tar.gz`) for your OS and architecture.
+3.  Extract the archive.
+4.  Move the `getctx` (or `getctx.exe`) executable to a directory in your system's `PATH` (e.g., `/usr/local/bin` on Linux or a dedicated folder on Windows).
+
