@@ -134,6 +134,7 @@ You can also download a pre-compiled binary for your operating system directly f
 3.  Extract the archive.
 4.  Move the `getctx` (or `getctx.exe`) executable to a directory in your system's `PATH` (e.g., `/usr/local/bin` on Linux or a dedicated folder on Windows).
 
-
+---
+If you find any bugs, you can send me a message at kacperzielinski.dev@gmail.com
 
 
